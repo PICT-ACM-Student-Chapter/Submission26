@@ -10,7 +10,7 @@ router.post('/', isUserAuthenticated, async (req, res) => {
     const { paper_type } = req.body;
     const ems_id = emsIds.paper;
     try {
-
+        //this is version 2
         const data = await client.query(
             "SELECT* FROM user_events WHERE fk_user=$1 and ems_id=$2",
             [req.user.id, ems_id]
