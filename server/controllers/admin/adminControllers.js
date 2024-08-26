@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 
-const client = require("../db/connect");
+const client = require("../../db/connect");
 const generateAdminToken = require("../utils/generateAdmionTokens");
 
 exports.signUpAdmin = async (req, res) => {
