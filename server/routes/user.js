@@ -24,7 +24,7 @@ router.post('/signin', async (req, res) => {
         let response = await axios(options)
         let user = response.data.user;
         if (response?.data?.error) {
-            return res.status(400).send({
+            return res.status(400).send({ 
                 error: response.data.error,
             })
         }
@@ -59,7 +59,7 @@ router.post('/signin', async (req, res) => {
         else if (duplicateError === "users_mobile_number_key") {
             res.status(409).json({ error: "User with this mobile_number already extsts" })
         }
-        else {
+        else { 
             res.status(500).json({ error: "Internal Server Error" });
         }
     }
@@ -68,10 +68,10 @@ router.post('/signin', async (req, res) => {
 router.get('/me', isUserAuthenticated, (req, res) => {
     res.send({
         user: req.user,
-    })
+    }) 
 })
 
-router.post('/signout', isUserAuthenticated, async (req, res) => {
+router.post('/signout', isUserAuthenticated, async (req, res) => {    
     const options = {
         method: "POST",
         url: `${process.env.EMS_API}/user/signout`,

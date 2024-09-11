@@ -1,28 +1,24 @@
-const { Client } = require("pg");
-const fs = require("fs");
 
-const configDev = {
-  host: process.env.POSTGRES_HOST,
-  user: process.env.POSTGRES_USER,
-  port: process.env.POSTGRES_PORT,
-  // connectionTimeoutMillis: 2000,
-  password: process.env.POSTGRES_PASSWORD,
-  database: "submission",
-};
-console.log(process.env.CONN_STRING);
-// const configProd = {
-//   connectionString: process.env.CONN_STRING,
-//   ssl: {
-//     rejectUnauthorized: false,
-//     ca: fs.readFileSync("ca-certificate.crt").toString(),
-//   },
-// };
 
-// const configProd = {};s
+require('dotenv').config();
+const { Client } = require('pg');
 
-const client = new Client(
-  //process.env.NODE_ENV === "dev" ? configDev : configProd
-  configDev
-);
+// Create a new pool using the environment variables
 
-module.exports = client;
+const client = new Client({
+  host:'ep-yellow-mode-a59vb1i6.us-east-2.aws.neon.tech',
+  database: 'submission',
+  user: 'submission_owner',
+  password:'wWTcFM4U3NmC',
+  ssl: {
+    rejectUnauthorized: false, // This is important for Neon database connections
+  },  
+  port:5432  
+}); 
+
+client.on('connect', () => {
+  console.log('Connected to the PostgreSQL database');
+}); 
+
+// Export the pool for use in other parts of the application
+module.exports = client; 

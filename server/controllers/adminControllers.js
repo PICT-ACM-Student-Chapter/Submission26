@@ -1,9 +1,8 @@
 const bcrypt = require('bcryptjs');
+const client = require("../db/connect");
+const generateAdminToken = require("../utils/generateUserTokens");
 
-const client = require("../../db/connect");
-const generateAdminToken = require("../utils/generateAdmionTokens");
-
-exports.signUpAdmin = async (req, res) => {
+const signUpAdmin = async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash(req.body.password, 10)
         const query = `INSERT INTO Admin (username, password, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, username, created_at, updated_at`;
@@ -26,7 +25,7 @@ exports.signUpAdmin = async (req, res) => {
     }
 };
 
-exports.signInAdmin = async (req, res) => {
+const signInAdmin = async (req, res) => {
     try {
         const query = `select * from Admin where username = $1`;
         const values = [req.body.username];
@@ -60,11 +59,11 @@ exports.signInAdmin = async (req, res) => {
     }
 }
 
-exports.getAdmin = async (req, res) => {
+const getAdmin = async (req, res) => {
     res.send({ admin: req.admin });
 }
 
-exports.logOutAdmin = async (req, res) => {
+ const logOutAdmin = async (req, res) => {
     try {
         const query = "delete from admin_token where token = $1";
         const params = [req.token];
@@ -82,3 +81,5 @@ exports.logOutAdmin = async (req, res) => {
         })
     }
 }
+
+module.exports={signInAdmin,signUpAdmin,getAdmin,logOutAdmin};   
