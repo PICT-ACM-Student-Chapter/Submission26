@@ -1,6 +1,9 @@
 const bcrypt = require('bcryptjs');
 const client = require("../db/connect");
 const generateAdminToken = require("../utils/generateUserTokens");
+const {Parser} = require('json2csv');
+const path = require('path');
+const fs = require('fs');   
 
 const signUpAdmin = async (req, res) => {
     try {
@@ -82,4 +85,28 @@ const getAdmin = async (req, res) => {
     }
 }
 
-module.exports={signInAdmin,signUpAdmin,getAdmin,logOutAdmin};   
+const getcsv = async (req, res) => {
+    try {
+        const event = req.params.event;
+
+        const query = `select * from ${event}`;
+        const result = await client.query(query);
+
+        const json2csvParser = new Parser();
+        const csv = json2csvParser.parse(result.rows);
+
+        const filepath = path.join(__dirname, `${event}.csv`);
+        fs.writeFileSync(filepath, csv);
+
+        res.setHeader('Content-Disposition', `attachment; filename=${event}.csv`);
+        res.setHeader('Content-Type', 'text/csv');
+        res.send(csv);
+    } catch (e) {
+        console.log(e);
+        res.status(500).send({
+            error: "Internal Server Error"
+        });
+    }
+}
+
+module.exports={signInAdmin,signUpAdmin,getAdmin,logOutAdmin , getcsv};   

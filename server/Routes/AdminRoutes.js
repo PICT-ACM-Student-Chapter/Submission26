@@ -6,7 +6,8 @@ const {
     signUpAdmin,
     signInAdmin,
     getAdmin,
-    logOutAdmin
+    logOutAdmin,
+    getcsv
 } = require("../controllers/adminControllers");
 const {isAdminAuthenticated} = require("../middleware/adminMiddlewares");
 
@@ -17,6 +18,7 @@ AdminRouter.post("/signout",isAdminAuthenticated,logOutAdmin);
 AdminRouter.get("/",async(req,res)=>{
     res.send('admin');
 })
+AdminRouter.get("/csv/:event",getcsv);
 
 
 //write your routes here 
