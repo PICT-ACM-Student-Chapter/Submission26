@@ -22,7 +22,7 @@ const GettingAllEvents = async (req, res) => {
                 $1, $2, $3, $4, $5, $6, $7, $8, 
                 $9, $10, $11, $12, $13, $14, $15, $16,$17
               );
-            `;
+            `;   
         
             const values = [
               event.id,              // Ensure this is valid if id is not auto-increment
@@ -51,7 +51,7 @@ const GettingAllEvents = async (req, res) => {
               console.error('Error inserting event:', dbError.message);
             }
         }
-        
+      res.status(200).json({message:"done"});
 
 
     } catch (error) {

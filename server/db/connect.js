@@ -17,7 +17,7 @@ const client = new Client({
 }); 
 
 client.on('connect', () => {
-  console.log('Connected to the PostgreSQL database');
+  console.log('Connected to the PostgreSQL database'); 
 }); 
 
 // Export the pool for use in other parts of the application

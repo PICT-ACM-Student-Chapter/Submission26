@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
  * @returns {String} JWT token
  */
 const generateUserToken = async (userId, ems_token) => {
-    console.log(userId);
+    //console.log(userId);
     try {
         const timestamp = new Date();
         const token = jwt.sign({ id: userId }, process.env.TOKEN_SECRET||"secret");

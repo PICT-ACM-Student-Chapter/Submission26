@@ -17,7 +17,7 @@ router.post("/", isUserAuthenticated, async (req, res) =>
   const ems_id = emsIds.dataquest;
   const date = new Date();
   const currDate = date.toDateString();
-  try
+  try 
   {
     const data = await client.query(
       "SELECT * FROM user_events WHERE fk_user=$1 and ems_id=$2",

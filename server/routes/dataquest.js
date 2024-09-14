@@ -10,7 +10,7 @@ const router = new express.Router();
 
 router.post("/", isUserAuthenticated, async (req, res) => {
   // const seniors = [ 'TE', 'BE' ]
-  const { submission_csv } = req.body;
+  const { submission_csv } = req.body; 
   const { submission_python } = req.body;
   const ems_id = emsIds.dataquest;
   const date = new Date();

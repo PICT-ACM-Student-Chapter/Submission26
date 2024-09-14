@@ -12,6 +12,9 @@ const UserRouter = require("../server/Routes/UserRoutes");
 const DQRouter = require("../server/Routes/DataquestRoutes");
 const FreezeRouter = require("./Routes/FreezeRoutes");
 const alleventRouter = require("./Routes/AlleventRoutes");
+const InsightRouter = require("./Routes/InsightRoutes");
+const WebAppRouter = require("./Routes/WebAppRoutes");
+const PhotoShopRouter = require("./Routes/PhotoShopRoutes");
 const app = express();
 
 pool.connect();
@@ -29,6 +32,9 @@ app.use("/admin", AdminRouter);
 app.use("/dataquest", DQRouter);
 app.use("/freeze", FreezeRouter);
 app.use("/allevents",alleventRouter);
+app.use("/insight",InsightRouter);
+app.use("/webapp",WebAppRouter);
+app.use("/photoshop",PhotoShopRouter);
 
 app.get("/", async (req, res) => {
   res.send("pong");

@@ -1,5 +1,5 @@
 const client = require("../db/connect");
-
+const { emsIds } = require("../models/master");
 
 const postPaper=async (req, res) => {
     // const { submission } = req.body;
@@ -8,13 +8,13 @@ const postPaper=async (req, res) => {
     try {
         //this is version 2
         const data = await client.query(
-            "SELECT* FROM user_events WHERE fk_user=$1 and ems_id=$2",
+            "SELECT* FROM user_events WHERE fk_user=$1 and fk_event=$2",
             [req.user.id, ems_id]
         );
 
         if (data.rowCount === 0) {
             return res.status(400).send({
-                error: "User havent Registered "
+                error: "User haven't Registered "
             })
         }
 

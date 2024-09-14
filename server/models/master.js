@@ -22,10 +22,10 @@ const masterEvents = [
 ];
 
 const emsIds = {
-  dataquest: 5,
-  web: 4,
-  insight: 12,
-  freeze: 13,
+  dataquest: 18,
+  web: 17,
+  insight: 20,
+  freeze: 19,
 };
 
 module.exports = { masterEvents, emsIds };

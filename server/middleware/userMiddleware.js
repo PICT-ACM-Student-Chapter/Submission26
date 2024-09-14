@@ -19,6 +19,7 @@ const isUserAuthenticated = async (req, res, next) => {
             return res.status(401).json({ error: "Unauthorized user!" });
         }
         req.user = result.rows[0];
+        console.log(result.rows[0]);
         req.token = token;
         req.ems_token = ems_token;
         next();

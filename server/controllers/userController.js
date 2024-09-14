@@ -1,6 +1,7 @@
 const axios=require("axios"); 
 const client = require("../db/connect");
 const generateUserToken = require("../utils/generateUserTokens");
+const fetchEvents = require("../utils/fetchEvents");
 
 
 const signInUser=async (req, res) => {
@@ -23,7 +24,7 @@ const signInUser=async (req, res) => {
         let user = response.data.user;
         if (response?.data?.error) {
             return res.status(400).send({ 
-                error: response.data.error,
+                error: response.data.error, 
             })
         }
         const ems_token = response.data.token;
@@ -36,7 +37,7 @@ const signInUser=async (req, res) => {
         }
         user = response.rows[0]
         console.log(user);
-        const userId = user;
+        const userId = user.id;
         const token = await generateUserToken(userId, ems_token);
 
         await fetchEvents(ems_token, userId);
@@ -63,4 +64,32 @@ const signInUser=async (req, res) => {
         }
     }
 };
-module.exports={signInUser};    
+const signoutUser= async (req, res) => {    
+    const options = {
+        method: "POST",
+        url: `https://pulzion22-ems-backend-evj4.onrender.com/user/signout`,
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${req.ems_token}`,
+        },
+    };
+    try {   
+        const query = "delete from user_token where token = $1";
+        const params = [req.token];
+        const data = await client.query(query, params);
+        if (data.rowCount === 1) {
+            return res.status(200).json({ success: "successfully logged out" });
+        } else { 
+            const response = await axios(options);
+            return res.status(500).json({ error: "Unable to log out" });
+        }
+    } catch (err) {
+        console.log(err)
+        if (err?.response) {
+            return res.status(400).send(err?.response?.data);
+        }
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+module.exports={signInUser,signoutUser};    

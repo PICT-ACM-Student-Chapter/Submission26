@@ -34,7 +34,7 @@ const setArr = (ems_events, submission_events, ems_id, userId, finalArr) => {
 const fetchEvents = async (ems_token, userId) => {
   const options = {
     method: "GET",
-    url: `${process.env.EMS_API}/user_events`,
+    url: `https://pulzion22-ems-backend-evj4.onrender.com/user_events`,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${ems_token}`,
@@ -42,14 +42,18 @@ const fetchEvents = async (ems_token, userId) => {
   };
   try {
     const response = await axios(options);
+    //console.log(response.data);
     console.log("User Events fetched from EMS", response);
     const result = await client.query(
       `select * from user_events where fk_user = $1`,
       [userId]
     );
     let ems_events = response.data.events;
+    //console.log(ems_events);
     const submission_events = await result.rows;
+    console.log(submission_events);x
     let finalArr = [];
+
     masterEvents.forEach((event) => {
       finalArr = setArr(
         ems_events,

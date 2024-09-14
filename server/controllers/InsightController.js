@@ -1,11 +1,16 @@
 
 const client = require("../db/connect");
+const { emsIds } = require("../models/master");
+
+
+
+
 const postInsight= async(req,res)=>{
     const { submission, topic } =req.body;
     const ems_id= emsIds.insight;
     try {
         const data= await client.query(
-            "SELECT* FROM user_events WHERE fk_user=$1 and ems_id=$2",
+            "SELECT* FROM user_events WHERE fk_user=$1 and fk_event=$2",
             [req.user.id, ems_id]
         );
 
@@ -29,11 +34,8 @@ const postInsight= async(req,res)=>{
         );
         res.send({
             submission:response.rows[0]
-        })
+        })    
 
-     
-
-        
     } catch (error) {
         console.log(error);
         res.status(500).send({
@@ -42,6 +44,10 @@ const postInsight= async(req,res)=>{
         
     }
 };
+
+
+
+
 const getInsight =async (req, res) => {
     try {
         const response = await client.query(
@@ -67,4 +73,6 @@ const getInsight =async (req, res) => {
 
     }
 }
+
+
 module.exports={postInsight,getInsight}

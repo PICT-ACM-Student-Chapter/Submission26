@@ -1,5 +1,6 @@
 
 const client = require("../db/connect");
+const { emsIds } = require("../models/master");
 
 const PostFreeze= async (req, res) => {
     const { submission } = req.body;
@@ -8,9 +9,9 @@ const PostFreeze= async (req, res) => {
     try {
 
         const data = await client.query(
-            "SELECT * FROM user_events WHERE fk_user=$1 and ems_id=$2",
+            "SELECT * FROM user_events WHERE fk_user=$1 and fk_event=$2",
             [req.user.id, ems_id]
-        );
+        ); 
 
         if (data.rowCount === 0) {
             console.log("Common")
@@ -18,7 +19,7 @@ const PostFreeze= async (req, res) => {
                 
                 error: "User havent Registered "
             })
-        }
+        } 
 
         const query = `select exists (select * from freeze_submission where fk_user = $1)`
         const result = await client.query(query, [req.user.id]);
