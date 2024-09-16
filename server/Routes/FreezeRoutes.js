@@ -1,11 +1,11 @@
 const express =require('express');
 const isUserAuthenticated = require('../middleware/userMiddleware');
-const { PostFreeze, getFreeze } = require('../controllers/FreezeController');
+const { PostFreeze, getFreeze, ResultFreeze } = require('../controllers/FreezeController');
 const { isAdminAuthenticated } = require('../middleware/adminMiddlewares');
 const FreezeRouter=new express.Router();
 
 FreezeRouter.post("/post",isUserAuthenticated,PostFreeze);
-FreezeRouter.get("/get",isAdminAuthenticated,getFreeze);
+FreezeRouter.get("/getresult",isAdminAuthenticated,ResultFreeze);
 FreezeRouter.get("/",async(req,res)=>{
     res.send("freeze");
 })
@@ -14,4 +14,4 @@ FreezeRouter.get("/",async(req,res)=>{
 
 
 
-module.exports= FreezeRouter;
+module.exports= FreezeRouter;                      

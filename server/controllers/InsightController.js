@@ -74,5 +74,16 @@ const getInsight =async (req, res) => {
     }
 }
 
+const ResultInsight=async(req,res)=>{
+    try {
+        const query=`select * from insight`;
+        const result=await client.query(query);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({error:"Internal Server Error"});
+        
+    }
+}
 
-module.exports={postInsight,getInsight}
+module.exports={postInsight,getInsight,ResultInsight}

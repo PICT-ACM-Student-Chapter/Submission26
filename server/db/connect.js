@@ -15,7 +15,7 @@ const client = new Client({
   },  
   port:5432  
 }); 
-
+ 
 client.on('connect', () => {
   console.log('Connected to the PostgreSQL database'); 
 }); 

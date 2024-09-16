@@ -88,4 +88,16 @@ const getPaper= async (req, res) => {
         });
     }
 }
-module.exports={postPaper,getPaper};
+
+const ResultPaper=async(req,res)=>{
+    try {
+        const query=`select * from paper`;
+        const result=await client.query(query);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({error:"Internal Server Error"});
+        
+    }
+}
+module.exports={postPaper,getPaper,ResultPaper};

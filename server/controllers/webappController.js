@@ -70,4 +70,16 @@ const GetWebApp= async (req, res) =>
       }
     };
 
-module.exports={PostWebApp,GetWebApp};
+    const ResultWebapp=async(req,res)=>{
+      try {
+          const query=`select * from webapp`;
+          const result=await client.query(query);
+          res.status(200).json(result.rows);
+      } catch (error) {
+          console.log(error);
+          res.status(500).json({error:"Internal Server Error"});
+          
+      }
+  }
+
+module.exports={PostWebApp,GetWebApp,ResultWebapp};

@@ -77,4 +77,17 @@ const getFreeze=async (req, res) => {
     }
 }
 
-module.exports={PostFreeze,getFreeze}; 
+
+const ResultFreeze=async(req,res)=>{
+    try {
+        const query=`select * from freeze_submission`;
+        const result=await client.query(query);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({error:"Internal Server Error"});
+        
+    }
+}
+
+module.exports={PostFreeze,getFreeze,ResultFreeze}; 

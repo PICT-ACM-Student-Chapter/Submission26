@@ -86,7 +86,18 @@ const getAdmin = async (req, res) => {
         })
     } 
 }
-
+// const GetSubmissionFromEvent=async(req,res)=>{
+//     try {
+//         const name=req.params.name;
+//         if(!name){
+//             res.status(400).json({message:"name not found !!!"});
+//         }
+//         const query=`select ${name}.id,${name}.`
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({message:"internal server error !!"})
+//     }
+// }
 const getcsv = async (req, res) => {
     try {
         const event = req.params.event;
