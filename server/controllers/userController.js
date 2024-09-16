@@ -17,7 +17,7 @@ const signInUser=async (req, res) => {
         data: {
             email,
             password
-        },
+        }, 
     };
     try {
         let response = await axios(options)
@@ -34,7 +34,7 @@ const signInUser=async (req, res) => {
                 "INSERT INTO users( first_name, last_name, email, mobile_number, college, year, created_at, updated_at, ems_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
                 [user.first_name, user.last_name, user.email, user.mobile_number, user.college, user.year, new Date(), new Date(), user.id]
             );
-        }
+        } 
         user = response.rows[0]
         console.log(user);
         const userId = user.id;

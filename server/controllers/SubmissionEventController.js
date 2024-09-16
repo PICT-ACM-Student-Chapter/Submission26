@@ -22,7 +22,8 @@ const addSubmissonEvent = async (req, res) => {
         console.error(error); // Log the error for debugging
         return res.status(500).json({ message: "Internal server error !!" });
     }
-};
+};    
+
   
 const updateSubmissionEvent = async (req, res) => {
     try {
