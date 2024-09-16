@@ -4,19 +4,19 @@ const { emsIds } = require("../models/master");
 const postPaper=async (req, res) => {
     // const { submission } = req.body;
     const { paper_type } = req.body;
-    const ems_id = emsIds.paper;
+    //const ems_id = emsIds.paper;
     try {
         //this is version 2
-        const data = await client.query(
-            "SELECT* FROM user_events WHERE fk_user=$1 and fk_event=$2",
-            [req.user.id, ems_id]
-        );
+        // const data = await client.query(
+        //     "SELECT* FROM user_events WHERE fk_user=$1 and fk_event=$2",
+        //     [req.user.id, ems_id]
+        // );
 
-        if (data.rowCount === 0) {
-            return res.status(400).send({
-                error: "User haven't Registered "
-            })
-        }
+        // if (data.rowCount === 0) {
+        //     return res.status(400).send({
+        //         error: "User haven't Registered "
+        //     })
+        // }
 
         const query = `select exists (select * from paper where fk_user = $1)`
         const result = await client.query(query, [req.user.id]);

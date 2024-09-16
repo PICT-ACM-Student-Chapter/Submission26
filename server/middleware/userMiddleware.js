@@ -29,4 +29,4 @@ const isUserAuthenticated = async (req, res, next) => {
     }
 }
 
-module.exports = isUserAuthenticated;
+module.exports = isUserAuthenticated;  

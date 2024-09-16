@@ -52,6 +52,14 @@ CREATE TABLE event (
 	updated_at TIMESTAMP NOT NULL
 );
 
+CREATE TABLE submission_event(
+	id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
+	event_id int not null UNIQUE,
+	event_name text not null,
+	event_route text not null,
+	event_status BOOLEAN 
+	CONSTRAINT event_id FOREIGN KEY(event_id) REFERENCES event(id) ON DELETE CASCADE,
+)
 
 CREATE TABLE user_events (
 	id INT GENERATED ALWAYS AS IDENTITY UNIQUE,

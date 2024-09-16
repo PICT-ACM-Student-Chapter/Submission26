@@ -10,7 +10,7 @@ const client = new Client({
   database: 'submission',
   user: 'submission_owner',
   password:'wWTcFM4U3NmC',
-  ssl: {
+  ssl: {            
     rejectUnauthorized: false, // This is important for Neon database connections
   },  
   port:5432  

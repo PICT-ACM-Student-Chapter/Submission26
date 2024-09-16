@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const client = require("../db/connect");
-const generateAdminToken = require("../utils/generateUserTokens");
+const {generateAdminToken}   = require("../utils/generateUserTokens");
 const {Parser} = require('json2csv');
 const path = require('path');
 const fs = require('fs');   
@@ -11,7 +11,9 @@ const signUpAdmin = async (req, res) => {
         const query = `INSERT INTO Admin (username, password, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, username, created_at, updated_at`;
         const values = [req.body.username, hashedPassword, new Date(), new Date()];
         const result = await client.query(query, values);
-        const token = await generateAdminToken(result.rows[0].id);
+        const admin_id=result.rows[0].id;
+        console.log(admin_id);
+        const token = await generateAdminToken(admin_id);
         res.send({
             admin: result.rows[0],
             token
@@ -23,7 +25,7 @@ const signUpAdmin = async (req, res) => {
             return res.status(409).json({ error: "Admin already exists" })
         }
         res.status(500).send({
-            error: "Internal Server Error"
+            error: "Internal Server Error" 
         })
     }
 };
@@ -82,7 +84,7 @@ const getAdmin = async (req, res) => {
         res.status(500).send({
             error: "Internal Server Error"
         })
-    }
+    } 
 }
 
 const getcsv = async (req, res) => {

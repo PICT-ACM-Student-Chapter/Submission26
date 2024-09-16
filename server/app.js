@@ -15,6 +15,7 @@ const alleventRouter = require("./Routes/AlleventRoutes");
 const InsightRouter = require("./Routes/InsightRoutes");
 const WebAppRouter = require("./Routes/WebAppRoutes");
 const PhotoShopRouter = require("./Routes/PhotoShopRoutes");
+const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
 const app = express();
 
 pool.connect();
@@ -35,6 +36,7 @@ app.use("/allevents",alleventRouter);
 app.use("/insight",InsightRouter);
 app.use("/webapp",WebAppRouter);
 app.use("/photoshop",PhotoShopRouter);
+app.use("/submission",SubmissionEventRouter);
 
 app.get("/", async (req, res) => {
   res.send("pong");
@@ -42,7 +44,7 @@ app.get("/", async (req, res) => {
 
 // Schedule a cron job to run every day at midnight (example: '0 0 * * *' for midnight)
 cron.schedule("* * * * *", async () => {
-  console.log("Cron job running at midnight!");
+  console.log("Cron job is running ");
   
   // You can perform your database operations or other tasks here
 });

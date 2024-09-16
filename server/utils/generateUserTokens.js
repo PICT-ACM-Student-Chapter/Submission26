@@ -22,4 +22,21 @@ const generateUserToken = async (userId, ems_token) => {
     }
 };
 
-module.exports = generateUserToken;
+
+const generateAdminToken = async (adminId) => {
+    try {
+        const timestamp = new Date();
+        const token = jwt.sign({ id: adminId }, process.env.TOKEN_SECRET || "secret"); // Use adminId instead of userId
+        const tokenRecord =
+            "INSERT INTO admin_token(token, is_valid, created_at, updated_at, fk_admin) VALUES ($1, $2, $3, $4, $5)";
+        const tokenValues = [token, true, timestamp, timestamp, adminId];
+        
+        await client.query(tokenRecord, tokenValues);
+        return token;
+    } catch (err) {
+        throw new Error(err);
+    }
+};
+
+
+module.exports = {generateUserToken,generateAdminToken};
