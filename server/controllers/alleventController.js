@@ -59,4 +59,16 @@ const GettingAllEvents = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch events" }); // Send error response
     }
 };
-module.exports={GettingAllEvents}; 
+
+
+const GetAllEventFromEms=async(req,res)=>{
+  try {
+      const query=`select * from event;`
+      const result=await client.query(query);
+      res.status(200).json(result.rows)
+  } catch (error) {
+      console.log(error);
+      res.status(500).json({error:"internal server error !"})
+  }
+}
+module.exports={GettingAllEvents,GetAllEventFromEms}; 

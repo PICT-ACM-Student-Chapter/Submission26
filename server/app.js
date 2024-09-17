@@ -16,6 +16,7 @@ const InsightRouter = require("./Routes/InsightRoutes");
 const WebAppRouter = require("./Routes/WebAppRoutes");
 const PhotoShopRouter = require("./Routes/PhotoShopRoutes");
 const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
+const InnowaveRouter = require("./Routes/InnowaveRoutes");
 const app = express();
 
 pool.connect();
@@ -37,6 +38,7 @@ app.use("/insight",InsightRouter);
 app.use("/webapp",WebAppRouter);
 app.use("/photoshop",PhotoShopRouter);
 app.use("/submission",SubmissionEventRouter);
+app.use("/innowave",InnowaveRouter);
 
 app.get("/", async (req, res) => {
   res.send("pong");

@@ -1,6 +1,6 @@
 const express = require("express");
-const { GettingAllEvents } = require("../controllers/alleventController");
-const { GetAllEventFromEms } = require("../controllers/InnowaveController");
+const { GettingAllEvents, GetAllEventFromEms } = require("../controllers/alleventController");
+
 const alleventRouter=express.Router();
 alleventRouter.get("/addevents",GettingAllEvents);
 alleventRouter.get("/events",GetAllEventFromEms);
