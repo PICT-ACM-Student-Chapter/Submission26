@@ -1,33 +1,31 @@
-const express = require("express");
-const {isAdminAuthenticated} = require("../middlewares/adminMiddlewares");
-const client = require('../db/connect');
-
+    const express =require('express');
+const   AdminRouter=new express.Router();
 
 
 const {
     signUpAdmin,
     signInAdmin,
     getAdmin,
-    logOutAdmin
+    logOutAdmin,
+    getcsv
 } = require("../controllers/adminControllers");
+const {isAdminAuthenticated} = require("../middleware/adminMiddlewares");
 
-const router = express.Router();
-
-router.post("/signup", signUpAdmin);
-router.post("/signin",signInAdmin);
-router.get("/me",isAdminAuthenticated,getAdmin);
-router.post("/signout",isAdminAuthenticated,logOutAdmin);
-
-router.get("/dataquest", isAdminAuthenticated , async(req,res)=>{
-   try {
-       const response= await client.query("SELECT * FROM dataquest");
-       res.status(400).send({
-            submissions: response.rows[0]
-       })
-       
-   } catch (error) {
-       
-   }
+AdminRouter.post("/signup", signUpAdmin);
+AdminRouter.post("/signin",signInAdmin);
+AdminRouter.get("/me",isAdminAuthenticated,getAdmin);
+AdminRouter.post("/signout",isAdminAuthenticated,logOutAdmin);
+AdminRouter.get("/",async(req,res)=>{
+    res.send('admin');
 })
+AdminRouter.get("/csv/:event",getcsv);
 
-module.exports = router;
+
+//write your routes here 
+
+
+
+
+
+
+module.exports=AdminRouter;   
