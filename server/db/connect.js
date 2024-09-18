@@ -6,10 +6,10 @@ const { Client } = require('pg');
 // Create a new pool using the environment variables
 
 const client = new Client({
-  host:'ep-yellow-mode-a59vb1i6.us-east-2.aws.neon.tech',
-  database: 'submission',
-  user: 'submission_owner',
-  password:'wWTcFM4U3NmC',
+  host:process.env.host,
+  database:process.env.database,
+  user:process.env.user,
+  password:process.env.password,
   ssl: {            
     rejectUnauthorized: false, // This is important for Neon database connections
   },  

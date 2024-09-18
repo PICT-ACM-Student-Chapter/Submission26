@@ -4,9 +4,10 @@ let cookieParser = require("cookie-parser");
 let logger = require("morgan");
 const pool = require("./db/connect");
 var cors = require("cors");
-const port = 3001;
-const cron = require("node-cron");
 
+const cron = require("node-cron");
+require('dotenv').config();
+const port = 3001 || process.env.port;
 const AdminRouter = require("../server/Routes/AdminRoutes");
 const UserRouter = require("../server/Routes/UserRoutes");
 const DQRouter = require("../server/Routes/DataquestRoutes");
@@ -17,6 +18,7 @@ const WebAppRouter = require("./Routes/WebAppRoutes");
 const PhotoShopRouter = require("./Routes/PhotoShopRoutes");
 const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
 const InnowaveRouter = require("./Routes/InnowaveRoutes");
+const { configDotenv } = require("dotenv");
 const app = express();
 
 pool.connect();
