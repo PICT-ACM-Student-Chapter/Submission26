@@ -33,7 +33,7 @@ CREATE TYPE store AS ENUM ('Online', 'Offline', 'Blended');
 
 
 CREATE TABLE event (
-	id INT GENE	RATED ALWAYS AS IDENTITY UNIQUE,
+	id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
 	name VARCHAR(255) NOT NULL,
 	description TEXT NOT NULL,
 	type text,
