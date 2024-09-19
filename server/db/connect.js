@@ -9,7 +9,7 @@ const client = new Client({
   host:process.env.host,
   database:process.env.database,
   user:process.env.user,
-  password:process.env.password,
+  password:process.env.password,      
   ssl: {            
     rejectUnauthorized: false, // This is important for Neon database connections
   },  
