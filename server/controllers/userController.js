@@ -10,7 +10,7 @@ const signInUser=async (req, res) => {
     console.log(`password : ${password}`); 
     const options = {
         method: "POST",
-        url: `https://pulzion22-ems-backend-evj4.onrender.com/user/signin`,
+        url: `https://pulzion22-ems-backend-2.onrender.com/user/signin`,
         headers: {
             "Content-Type": "application/json",
         },
@@ -100,7 +100,7 @@ WHERE
 const signoutUser= async (req, res) => {    
     const options = {
         method: "POST",
-        url: `https://pulzion22-ems-backend-evj4.onrender.com/user/signout`,
+        url: `https://pulzion22-ems-backend-2.onrender.com/user/signout`,
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${req.ems_token}`,

@@ -129,7 +129,7 @@ const setArr = (ems_events, submission_events, ems_id, userId, finalArr) => {
 async function FetchUserSubmissionEvents(ems_token, userId) {
   const options = {
     method: "GET",
-    url: `https://pulzion22-ems-backend-evj4.onrender.com/user_events`,
+    url: `https://pulzion22-ems-backend-2.onrender.com/user_events`,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${ems_token}`,
