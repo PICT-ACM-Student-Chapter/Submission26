@@ -45,7 +45,7 @@ const setArr = (ems_events, submission_events, ems_id, userId, finalArr) => {
 //   try {
 //     const response = await axios(options);
 //     //console.log(response.data);
-//     console.log("User Events fetched from EMS", response);
+//     console.log("User Events fetched fro m EMS", response);
 //     const result = await client.query(
 //       `select * from user_events where fk_user = $1`,
 //       [userId]

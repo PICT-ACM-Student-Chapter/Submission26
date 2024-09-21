@@ -6,16 +6,16 @@ const PostDataQuest=async (req, res) => {
     const date = new Date();
     const currDate = date.toDateString();
     try {
-      const data = await client.query(
-        "SELECT * FROM user_events WHERE fk_user=$1 and fk_event=$2",
-        [req.user.id, ems_id]
-      );
-      console.log("No error at line23");
-      if (data.rowCount === 0) {
-        return res.status(400).send({
-          error: "User havent Registered ",
-        });
-      }
+      // const data = await client.query(
+      //   "SELECT * FROM user_events WHERE fk_user=$1 and fk_event=$2",
+      //   [req.user.id, ems_id]
+      // );
+      // console.log("No error at line23");
+      // if (data.rowCount === 0) {
+      //   return res.status(400).send({
+      //     error: "User havent Registered ",
+      //   });
+      // }
       const query = `select * from dataquest where fk_user = $1 and Date(created_at) = $2`;
       const result = await client.query(query, [req.user.id, currDate]);
       if (result.rowCount >= 5) {

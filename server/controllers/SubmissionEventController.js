@@ -28,8 +28,6 @@ const addSubmissonEvent = async (req, res) => {
 const updateSubmissionEvent = async (req, res) => {
     try {
         const event_id = req.params.id;
-        const event_name = req.body.name;
-        const event_route = req.body.route;
         const event_status = req.body.status;
 
         if (!event_id) {
@@ -37,13 +35,14 @@ const updateSubmissionEvent = async (req, res) => {
         }
 
         const query = `UPDATE submission_event
-                       SET event_name = $1, event_route = $2, event_status = $3
-                       WHERE event_id = $4;`;
-        const params = [event_name, event_route, event_status, event_id];
+                       SET  event_route = $1, event_status = $2
+                       WHERE event_id = $3;`;
+        const params = [event_route, event_status, event_id];
         await client.query(query, params);
         res.status(200).json({ message: "Event updated successfully!" });
     } catch (error) {
         res.status(500).json({ message: "Internal server error!" });
+        console.log(error);
     }
 };
 const deleteSubmissionEvent = async (req, res) => {
@@ -65,7 +64,7 @@ const deleteSubmissionEvent = async (req, res) => {
 };
 const getSubmissionEvents = async () => {
     try {
-        const query = `SELECT event_id FROM submission_event;`;
+        const query = `SELECT event_id FROM submission_event where event_status=true ;`;
         const result = await client.query(query);
         const eventIds = result.rows.map(row => row.event_id);
         return eventIds;
@@ -76,7 +75,7 @@ const getSubmissionEvents = async () => {
 };
 const getAllSubmissionEvents = async (req,res) => {
     try {
-        const query = `SELECT * FROM submission_event;`;
+        const query = `SELECT * FROM submission_event where event_status=true `;
         const result = await client.query(query);
         const eventIds = result.rows
         return res.status(200).json(eventIds);
