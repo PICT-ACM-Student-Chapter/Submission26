@@ -3,7 +3,7 @@ const { emsIds } = require("../models/master");
 
 const postPaper=async (req, res) => {
     // const { submission } = req.body;
-    const { paper_type } = req.body;
+    const { paper_type } = req.body.type;
     //const ems_id = emsIds.paper;
     try {
         //this is version 2
@@ -25,7 +25,7 @@ const postPaper=async (req, res) => {
                 error: "Entry Already Submitted",
             })
         }
-        
+         
         if(paper_type===""){
             return res.status(400).send({
                 error:"Paper Type not entered"
