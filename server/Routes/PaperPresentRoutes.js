@@ -4,7 +4,7 @@ const { postPaper, getPaper, ResultPaper } = require('../controllers/PaperPresen
 const { isAdminAuthenticated } = require('../middleware/adminMiddlewares');
 
 const PaperRouter=new express.Router();
-PaperRouter.post("/post",isUserAuthenticated,postPaper);
+PaperRouter.post("/",isUserAuthenticated,postPaper);
 PaperRouter.get("/getresult",isAdminAuthenticated,ResultPaper);
 PaperRouter.get("/",async(req,res)=>{      
     res.send("paper");

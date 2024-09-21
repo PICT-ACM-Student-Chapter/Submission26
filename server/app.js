@@ -19,6 +19,7 @@ const PhotoShopRouter = require("./Routes/PhotoShopRoutes");
 const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
 const InnowaveRouter = require("./Routes/InnowaveRoutes");
 const { configDotenv } = require("dotenv");
+const PaperRouter = require("./routes/PaperPresentRoutes");
 const app = express();
 
 pool.connect();
@@ -41,6 +42,7 @@ app.use("/webapp",WebAppRouter);
 app.use("/photoshop",PhotoShopRouter);
 app.use("/submission",SubmissionEventRouter);
 app.use("/innowave",InnowaveRouter);
+app.use("/paper",PaperRouter);
 
 app.get("/", async (req, res) => {
   res.send("pong");
