@@ -17,9 +17,9 @@ const postPaper = async (req, res) => {
             });
         }
 
-        if (!paper_type || paper_type.trim() === "") {
+        if (!paper_type || paper_type.trim() === "") {  
             return res.status(400).send({
-                error: "Paper Type not entered",
+                error: "Paper Type not entered",   
             });
         }
 
@@ -48,7 +48,7 @@ const postPaper = async (req, res) => {
             }
 
             const response = await client.query(
-                "INSERT INTO paper(type, submission_abstract, submission_paper, active_submission, fk_user, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
+                "INSERT INTO paper(type, submission_abstract, submission_paper, active_submission, fk_user, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6,$7) RETURNING *",
                 [paper_type, submission_abstract, submission_paper, true, req.user.id, new Date(), new Date()]
             );
 
