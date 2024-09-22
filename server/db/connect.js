@@ -6,10 +6,10 @@ const { Client } = require('pg');
 // Create a new pool using the environment variables
 
 const client = new Client({
-  host:process.env.host,
-  database:process.env.database,
-  user:process.env.user,
-  password:process.env.password,      
+  host:process.env.host||'ep-yellow-mode-a59vb1i6.us-east-2.aws.neon.tech',
+  database:process.env.database||'submission',
+  user:process.env.user||'submission_owner',
+  password:process.env.password||"wWTcFM4U3NmC",      
   ssl: {            
     rejectUnauthorized: false, // This is important for Neon database connections
   },  
@@ -17,7 +17,7 @@ const client = new Client({
 }); 
  
 client.on('connect', () => {
-  console.log('Connected to the PostgreSQL database'); 
+  console.log('Connected to the PostgreSQL database');       
 }); 
 
 // Export the pool for use in other parts of the application

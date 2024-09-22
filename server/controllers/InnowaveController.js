@@ -1,5 +1,4 @@
 const client = require("../db/connect");
-const { param } = require("../Routes/AlleventRoutes");
 
 const postInnowave=async (req, res) => {
     // const { submission } = req.body;
@@ -15,24 +14,24 @@ const postInnowave=async (req, res) => {
             })
         } 
            
-
+        const type="ppt";
         if(!submission){
             res.status(400).json({message:"please enter submission content !!"})
         }
         const insertquery=`INSERT INTO InnoWave (Innowave_type, submission, active_submission, fk_user, created_at, updated_at)
-                    values(,$2,$3,$4,now(),now());`
+                    values($1,$2,$3,$4,now(),now());`
         const params=[type,submission,true,req.user.id];
         const insert_result= await client.query(insertquery,params);
         return res.status(200).json({
-            message: 'Submitted successfully !!',
+            message: 'Submitted successfully !!',                
             data: insert_result.rows
           });
    
-    } catch (error) {
+    } catch (error) { 
         console.log(error);
         res.status(500).send({
-            error: "Internal Server error"
-        });
+            error: "Internal Server error"    
+        });  
     }
 }
 const postInnowave2=async (req, res) => {
@@ -48,13 +47,13 @@ const postInnowave2=async (req, res) => {
                 error: "Entry Already Submitted",
             })
         } 
-           
+        const type="link";
 
         if(!submission){
             res.status(400).json({message:"please enter submission content !!"})
         }
         const insertquery=`INSERT INTO InnoWave2 (Innowave_type, submission, active_submission, fk_user, created_at, updated_at)
-                    values("link",$2,$3,$4,now(),now());`
+                    values($1,$2,$3,$4,now(),now());`
         const params=[type,submission,true,req.user.id];
         const insert_result= await client.query(insertquery,params);
         return res.status(200).json({

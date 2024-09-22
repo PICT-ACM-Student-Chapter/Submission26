@@ -7,7 +7,7 @@ var cors = require("cors");
 
 const cron = require("node-cron");
 require('dotenv').config();
-const port = 3001 || process.env.port;
+const port = 3002 || process.env.port;
 const AdminRouter = require("../server/Routes/AdminRoutes");
 const UserRouter = require("../server/Routes/UserRoutes");
 const DQRouter = require("../server/Routes/DataquestRoutes");
@@ -19,9 +19,11 @@ const PhotoShopRouter = require("./Routes/PhotoShopRoutes");
 const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
 const InnowaveRouter = require("./Routes/InnowaveRoutes");
 const { configDotenv } = require("dotenv");
-const PaperRouter = require("./routes/PaperPresentRoutes");
-const Innowave2Router = require("./routes/Innnovave2Routes");
-const DQ2Router = require("./routes/DataQuest2Routes");
+const PaperRouter = require("./Routes/PaperPresentRoutes");
+const DQ2Router = require("./Routes/DataQuest2Routes");
+const Innowave2Router = require("./Routes/Innowave2Routes");
+// const Innowave2Router = require("./Routes/Innnovave2Routes");
+// const DQ2Router = require("./routes/DataQuest2Routes");
 const app = express();
 pool.connect();
 
@@ -45,9 +47,9 @@ app.use("/submission",SubmissionEventRouter);
 app.use("/innowave",InnowaveRouter);
 app.use("/paper",PaperRouter);
 app.use("/innowave2",Innowave2Router);
-app.use("/dataquest",DQRouter);
+app.use("/dataquest",DQRouter);           
 app.use("/dataquest2",DQ2Router);
-
+ 
 app.get("/", async (req, res) => {
   res.send("pong");
 });
