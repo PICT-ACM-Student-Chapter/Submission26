@@ -75,7 +75,7 @@ const getSubmissionEvents = async () => {
 };
 const getAllSubmissionEvents = async (req,res) => {
     try {
-        const query = `SELECT * FROM submission_event where event_status=true `;
+        const query = `SELECT * FROM submission_event `;
         const result = await client.query(query);
         const eventIds = result.rows
         return res.status(200).json(eventIds);
