@@ -92,7 +92,17 @@ CREATE TABLE InnoWave(
 	CONSTRAINT fk_user FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
 	created_at TIMESTAMP NOT NULL,
 	updated_at TIMESTAMP NOT NULL
-)
+);
+CREATE TABLE InnoWave2(
+	id INT GENERATED ALWAYS AS IDENTITY UNIQUE, 
+	Innowave_type text not null,
+	submission VARCHAR(2048) NOT NULL,
+    active_submission BOOLEAN NOT NULL,
+	fk_user INT,
+	CONSTRAINT fk_user FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
+	created_at TIMESTAMP NOT NULL,
+	updated_at TIMESTAMP NOT NULL
+);
 
 CREATE TABLE webapp (
     id INT GENERATED ALWAYS AS IDENTITY UNIQUE, 

@@ -20,8 +20,9 @@ const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
 const InnowaveRouter = require("./Routes/InnowaveRoutes");
 const { configDotenv } = require("dotenv");
 const PaperRouter = require("./routes/PaperPresentRoutes");
+const Innowave2Router = require("./routes/Innnovave2Routes");
+const DQ2Router = require("./routes/DataQuest2Routes");
 const app = express();
-
 pool.connect();
 
 app.use(cors());
@@ -43,6 +44,9 @@ app.use("/photoshop",PhotoShopRouter);
 app.use("/submission",SubmissionEventRouter);
 app.use("/innowave",InnowaveRouter);
 app.use("/paper",PaperRouter);
+app.use("/innowave2",Innowave2Router);
+app.use("/dataquest",DQRouter);
+app.use("/dataquest2",DQ2Router);
 
 app.get("/", async (req, res) => {
   res.send("pong");
@@ -51,7 +55,7 @@ app.get("/", async (req, res) => {
 // Schedule a cron job to run every day at midnight (example: '0 0 * * *' for midnight)
 cron.schedule("* * * * *", async () => {
   console.log("Cron job is running ");
-  
+        
   // You can perform your database operations or other tasks here
 });
 
