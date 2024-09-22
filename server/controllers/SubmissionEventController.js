@@ -35,9 +35,9 @@ const updateSubmissionEvent = async (req, res) => {
         }
 
         const query = `UPDATE submission_event
-                       SET  event_route = $1, event_status = $2
-                       WHERE event_id = $3;`;
-        const params = [event_route, event_status, event_id];
+                       SET event_status = $1
+                       WHERE event_id = $2;`;
+        const params = [event_status, event_id];
         await client.query(query, params);
         res.status(200).json({ message: "Event updated successfully!" });
     } catch (error) {
