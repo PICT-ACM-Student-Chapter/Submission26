@@ -7,7 +7,7 @@ var cors = require("cors");
 
 const cron = require("node-cron");
 require('dotenv').config();
-const port = 3002 || process.env.port;
+const port = 3001 || process.env.port;
 const AdminRouter = require("../server/Routes/AdminRoutes");
 const UserRouter = require("../server/Routes/UserRoutes");
 const DQRouter = require("../server/Routes/DataquestRoutes");
@@ -24,10 +24,10 @@ const DQ2Router = require("./Routes/DataQuest2Routes");
 const Innowave2Router = require("./Routes/Innowave2Routes");
 // const Innowave2Router = require("./Routes/Innnovave2Routes");
 // const DQ2Router = require("./routes/DataQuest2Routes");
-const app = express();
+const app = express();    
 pool.connect();
 
-app.use(cors());
+app.use(cors());    
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

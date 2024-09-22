@@ -40,7 +40,7 @@ const postInnowave2=async (req, res) => {
     const submission=req.body.submission;
     try {
 
-        const query = `select exists (select * from Innowave where fk_user = $1)`
+        const query = `select exists (select * from Innowave2 where fk_user = $1)`
         const result = await client.query(query, [req.user.id]);
         if (result.rows[0].exists) {
             return res.status(400).send({
