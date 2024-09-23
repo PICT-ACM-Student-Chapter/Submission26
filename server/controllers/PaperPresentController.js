@@ -96,17 +96,17 @@ const getPaper= async (req, res) => {
 const ResultPaper=async(req,res)=>{
     try {
         const query=`SELECT 
-                    u.first_name, 
-                    u.last_name, 
-                    u.mobile_number, 
-                    u.year, 
-                    p.paper_type,
-                    p.submission_abstract
-                    p.submission_paper
+                        u.first_name, 
+                        u.last_name, 
+                        u.mobile_number, 
+                        u.year, 
+                        p.type,
+                        p.submission_abstract,
+                        p.submission_paper
                     FROM 
-                    users u
+                        users u
                     INNER JOIN 
-                    paper p ON u.id = p.fk_user;`;
+                        paper p ON u.id = p.fk_user`;
         const result=await client.query(query);
         res.status(200).json(result.rows);
     } catch (error) {
