@@ -28,16 +28,18 @@ const addSubmissonEvent = async (req, res) => {
 const updateSubmissionEvent = async (req, res) => {
     try {
         const event_id = req.params.id;
+        const event_route=req.body.route;
         const event_status = req.body.status;
+        
 
         if (!event_id) {
             return res.status(400).json({ message: "Event ID is required" });
         }
 
         const query = `UPDATE submission_event
-                       SET event_status = $1
-                       WHERE event_id = $2;`;
-        const params = [event_status, event_id];
+                       SET event_status = $1,event_route=$2
+                       WHERE event_id = $3;`;
+        const params = [event_status,event_route,event_id];
         await client.query(query, params);
         res.status(200).json({ message: "Event updated successfully!" });
     } catch (error) {
