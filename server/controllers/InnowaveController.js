@@ -70,7 +70,6 @@ const postInnowave2=async (req, res) => {
 }
 
 const ResultInnoWave=async(req,res)=>{
-    const type=req.params.type;
     try {
         const query=`SELECT 
                     u.first_name, 
@@ -83,8 +82,7 @@ const ResultInnoWave=async(req,res)=>{
                     users u
                     INNER JOIN 
                     InnoWave i ON u.id = i.fk_user;`;
-        const params=[type];
-        const result=await client.query(query,params);
+        const result=await client.query(query);
         res.status(200).json(result.rows);
     } catch (error) {
         console.log(error);
@@ -107,8 +105,7 @@ const ResultInnoWave2=async(req,res)=>{
                     users u
                     INNER JOIN 
                     InnoWave2 i ON u.id = i.fk_user;`;
-        const params=[type];
-        const result=await client.query(query,params);
+        const result=await client.query(query);
         res.status(200).json(result.rows);
     } catch (error) {
         console.log(error);

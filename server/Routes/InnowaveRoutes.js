@@ -4,7 +4,7 @@ const isUserAuthenticated = require('../middleware/userMiddleware');
 const { isAdminAuthenticated } = require('../middleware/adminMiddlewares');
 const InnowaveRouter=new express.Router();
 InnowaveRouter.post('/post',isUserAuthenticated,postInnowave);
-InnowaveRouter.get('/getresult/:type',isAdminAuthenticated,ResultInnoWave);     
+InnowaveRouter.get('/getresult',isAdminAuthenticated,ResultInnoWave);     
 InnowaveRouter.get("/",async(req,res)=>{
     res.send("Innowave");
 })
