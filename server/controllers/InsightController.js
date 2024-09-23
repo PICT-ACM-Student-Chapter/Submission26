@@ -82,7 +82,7 @@ const ResultInsight=async(req,res)=>{
                     u.mobile_number, 
                     u.year, 
                     i.topic,
-                    i.submission,
+                    i.submission
                     FROM 
                     users u
                     INNER JOIN 
