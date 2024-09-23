@@ -86,7 +86,7 @@ const ResultFreeze=async(req,res)=>{
                     u.last_name, 
                     u.mobile_number, 
                     u.year, 
-                    f.submission,
+                    f.submission
                     FROM 
                     users u
                     INNER JOIN 
