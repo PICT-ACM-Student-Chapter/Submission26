@@ -78,7 +78,7 @@ const ResultInnoWave=async(req,res)=>{
                     u.mobile_number, 
                     u.year, 
                     i.Innowave_type,
-                    i.submission,
+                    i.submission
                     FROM 
                     users u
                     INNER JOIN 
@@ -102,7 +102,7 @@ const ResultInnoWave2=async(req,res)=>{
                     u.mobile_number, 
                     u.year, 
                     i.Innowave_type,
-                    i.submission,
+                    i.submission
                     FROM 
                     users u
                     INNER JOIN 

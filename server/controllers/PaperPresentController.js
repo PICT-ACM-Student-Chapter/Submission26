@@ -15,7 +15,7 @@ const postPaper = async (req, res) => {
             return res.status(400).send({
                 error: "Entry Already Submitted",
             });
-        }
+        } 
 
         if (!paper_type || paper_type.trim() === "") {  
             return res.status(400).send({
@@ -102,7 +102,7 @@ const ResultPaper=async(req,res)=>{
                     u.year, 
                     p.paper_type,
                     p.submission_abstract
-                    p.submission_paper,
+                    p.submission_paper
                     FROM 
                     users u
                     INNER JOIN 
