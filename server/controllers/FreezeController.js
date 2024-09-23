@@ -80,7 +80,17 @@ const getFreeze=async (req, res) => {
 
 const ResultFreeze=async(req,res)=>{
     try {
-        const query=`select * from freeze_submission`;
+        const query=`SELECT 
+                    f.id,
+                    u.first_name, 
+                    u.last_name, 
+                    u.mobile_number, 
+                    u.year, 
+                    f.submission,
+                    FROM 
+                    users u
+                    INNER JOIN 
+                    freeze_submission f ON u.id = f.fk_user;`;
         const result=await client.query(query);
         res.status(200).json(result.rows);
     } catch (error) {

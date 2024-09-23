@@ -72,7 +72,16 @@ const GetWebApp= async (req, res) =>
 
     const ResultWebapp=async(req,res)=>{
       try {
-          const query=`select * from webapp`;
+          const query=`SELECT 
+    u.first_name, 
+    u.last_name, 
+    u.mobile_number, 
+    u.year, 
+    w.submission
+FROM 
+    users u
+INNER JOIN 
+    webapp w ON u.id = w.fk_user;`;
           const result=await client.query(query);
           res.status(200).json(result.rows);
       } catch (error) {

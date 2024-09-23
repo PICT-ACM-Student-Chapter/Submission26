@@ -72,7 +72,41 @@ const postInnowave2=async (req, res) => {
 const ResultInnoWave=async(req,res)=>{
     const type=req.params.type;
     try {
-        const query=`select * from InnoWave Where Innowave_type=$1`;
+        const query=`SELECT 
+                    u.first_name, 
+                    u.last_name, 
+                    u.mobile_number, 
+                    u.year, 
+                    i.Innowave_type,
+                    i.submission,
+                    FROM 
+                    users u
+                    INNER JOIN 
+                    InnoWave i ON u.id = i.fk_user;`;
+        const params=[type];
+        const result=await client.query(query,params);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            error: "Internal Server error"
+        });
+    }
+}
+const ResultInnoWave2=async(req,res)=>{
+    const type=req.params.type;
+    try {
+        const query=`SELECT 
+                    u.first_name, 
+                    u.last_name, 
+                    u.mobile_number, 
+                    u.year, 
+                    i.Innowave_type,
+                    i.submission,
+                    FROM 
+                    users u
+                    INNER JOIN 
+                    InnoWave2 i ON u.id = i.fk_user;`;
         const params=[type];
         const result=await client.query(query,params);
         res.status(200).json(result.rows);
@@ -84,4 +118,6 @@ const ResultInnoWave=async(req,res)=>{
     }
 }
 
-module.exports={postInnowave,ResultInnoWave,postInnowave2};
+
+
+module.exports={postInnowave,ResultInnoWave,postInnowave2,ResultInnoWave2};

@@ -76,7 +76,17 @@ const getInsight =async (req, res) => {
 
 const ResultInsight=async(req,res)=>{
     try {
-        const query=`select * from insight`;
+        const query=`SELECT 
+                    u.first_name, 
+                    u.last_name, 
+                    u.mobile_number, 
+                    u.year, 
+                    i.topic,
+                    i.submission,
+                    FROM 
+                    users u
+                    INNER JOIN 
+                    insight i ON u.id = i.fk_user;`;
         const result=await client.query(query);
         res.status(200).json(result.rows);
     } catch (error) {
