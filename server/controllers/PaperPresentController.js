@@ -106,7 +106,7 @@ const ResultPaper=async(req,res)=>{
                     FROM 
                     users u
                     INNER JOIN 
-                    paper p ON u.id = w.fk_user;`;
+                    paper p ON u.id = p.fk_user;`;
         const result=await client.query(query);
         res.status(200).json(result.rows);
     } catch (error) {
