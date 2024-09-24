@@ -124,5 +124,9 @@ const signoutUser= async (req, res) => {
         return res.status(500).json({ error: "Internal Server Error" });
     }
 }
-
-module.exports={signInUser,signoutUser,GetUserEvent};    
+const me =  async(req, res) => {
+    res.send({
+        user: req.user,
+    }) 
+};
+module.exports={signInUser,signoutUser,GetUserEvent,me};    
