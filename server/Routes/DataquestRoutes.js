@@ -6,7 +6,7 @@ const DQRouter=new express.Router();
 
 
 DQRouter.post("/post",isUserAuthenticated,PostDataQuest);
-DQRouter.get('/leaderboard',isAdminAuthenticated,getLeaderBoard);
+DQRouter.get('/leaderboard',isUserAuthenticated,getLeaderBoard);
 DQRouter.get("/get",isUserAuthenticated,GetDataQuest);
 
 
