@@ -6,6 +6,7 @@ const FreezeRouter=new express.Router();
 
 FreezeRouter.post("/post",isUserAuthenticated,PostFreeze);
 FreezeRouter.get("/getresult",isAdminAuthenticated,ResultFreeze);
+FreezeRouter.get("/get",isUserAuthenticated,getFreeze);
 FreezeRouter.get("/",async(req,res)=>{
     res.send("freeze");
 })

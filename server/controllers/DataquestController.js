@@ -3,6 +3,7 @@ const client = require("../db/connect");
 
 const PostDataQuest=async (req, res) => {
     // const seniors = [ 'TE', 'BE' ]
+    console.log("dataquest 1")
     const { submission_csv } = req.body; 
     const { submission_python } = req.body;
     const date = new Date();
@@ -106,7 +107,7 @@ const getLeaderBoard= async (req, res) => {
   //   }
   //   res.send({
   //     submissions: response.rows,
-  //   });
+  //   }); 
   // } 
 }
   catch (error) {

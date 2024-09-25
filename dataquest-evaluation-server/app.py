@@ -83,9 +83,13 @@ def eval1():
                 print("Private Attempt:", private_att)
 
                 if seniority in ["FE", "SE"]:
+                    print("accuracy score")
                     public_acc = accuracy_score(public_soln, public_att)
+                    print(public_acc)
                     private_acc = accuracy_score(private_soln, private_att)
+                    print(private_acc)
                 else:
+                    console.log("f1_score")
                     public_acc = f1_score(public_soln, public_att, average='binary')  # Adjust based on your classes
                     private_acc = f1_score(private_soln, private_att, average='binary')  # Adjust as needed
 
