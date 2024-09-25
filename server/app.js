@@ -22,10 +22,11 @@ const { configDotenv } = require("dotenv");
 const PaperRouter = require("./Routes/PaperPresentRoutes");
 const DQ2Router = require("./Routes/DataQuest2Routes");
 const Innowave2Router = require("./Routes/Innowave2Routes");
+const client = require("./db/connect");
 // const Innowave2Router = require("./Routes/Innnovave2Routes");
 // const DQ2Router = require("./routes/DataQuest2Routes");
 const app = express();    
-pool.connect();
+
 
 app.use(cors());    
 app.use(logger("dev"));
@@ -49,7 +50,10 @@ app.use("/paper",PaperRouter);
 app.use("/innowave2",Innowave2Router);
 app.use("/dataquest",DQRouter);           
 app.use("/dataquest2",DQ2Router);
- 
+client
+  .connect()
+  .then(() => console.log("connected"))
+  .catch((err) => console.error("connection error", err.stack));
 app.get("/", async (req, res) => {
   res.send("pong");
 });
