@@ -17,10 +17,11 @@ AdminRouter.get("/me",isAdminAuthenticated,getAdmin);
 AdminRouter.post("/signout",isAdminAuthenticated,logOutAdmin);
 AdminRouter.get("/",async(req,res)=>{
     res.send('admin');
-})
+})      
 AdminRouter.get("/csv/:event",getcsv);
 
-
+        
+                        
 //write your routes here 
 
 

@@ -14,4 +14,4 @@ DQRouter.get("/get",isUserAuthenticated,GetDataQuest);
 
 
 
-module.exports=DQRouter;
+module.exports=DQRouter;   

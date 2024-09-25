@@ -8,10 +8,10 @@ var cors = require("cors");
 const cron = require("node-cron");
 require('dotenv').config();
 const port = 3001 || process.env.port;
-const AdminRouter = require("../server/Routes/AdminRoutes");
+const AdminRouter = require("./Routes/AdminRoutes");   
 const UserRouter = require("../server/Routes/UserRoutes");
 const DQRouter = require("../server/Routes/DataquestRoutes");
-const FreezeRouter = require("./Routes/FreezeRoutes");
+const FreezeRouter = require("./Routes/FreezeRoutes"); 
 const alleventRouter = require("./Routes/AlleventRoutes");
 const InsightRouter = require("./Routes/InsightRoutes");
 const WebAppRouter = require("./Routes/WebAppRoutes");
@@ -63,5 +63,4 @@ cron.schedule("* * * * *", async () => {
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
-});
-            
+}); 
