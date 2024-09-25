@@ -34,6 +34,7 @@ const postInnowave=async (req, res) => {
         });  
     }
 }
+
 const postInnowave2=async (req, res) => {
     // const { submission } = req.body;
     
@@ -113,7 +114,58 @@ const ResultInnoWave2=async(req,res)=>{
         });
     }
 }
+const getinnowave1=async (req, res) => {
+    try {
+        const response = await client.query(
+            "SELECT * FROM Innowave WHERE fk_user= $1",
+            [req.user.id]
+        );
+         console.log("Request aayi");   
+        if (response.rowCount === 0) {
+            console.log("No dude no");
+            return res.status(400).send({
+                error: "Nothing Submitted"
+            })
+        }
+        res.send({
+            submission: response.rows[0]
+        })
 
 
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            error: "Internal Server error"
+        });
 
-module.exports={postInnowave,ResultInnoWave,postInnowave2,ResultInnoWave2};
+    }
+}
+const getinnowave2=async (req, res) => {
+    try {
+        const response = await client.query(
+            "SELECT * FROM InnoWave2 WHERE fk_user= $1",
+            [req.user.id]
+        );
+         console.log("Request aayi");   
+        if (response.rowCount === 0) {
+            console.log("No dude no");
+            return res.status(400).send({
+                error: "Nothing Submitted"
+            })
+        }
+        res.send({
+            submission: response.rows[0]
+        })
+
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            error: "Internal Server error"
+        });
+
+    }
+}
+
+
+module.exports={postInnowave,ResultInnoWave,postInnowave2,ResultInnoWave2,getinnowave1,getinnowave2};
