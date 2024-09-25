@@ -5,7 +5,7 @@ const GettingAllEvents = async (req, res) => {
     console.log("Fetching all events...");
     const options = {
         method: "GET",
-        url: `https://pulzion22-ems-backend-2.onrender.com/events`,
+        url: `${process.env.ems_api}/events`,
     };
     
     try {
