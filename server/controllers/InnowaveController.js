@@ -68,7 +68,6 @@ const postInnowave2=async (req, res) => {
         });
     }
 }
-
 const ResultInnoWave=async(req,res)=>{
     try {
         const query=`SELECT 

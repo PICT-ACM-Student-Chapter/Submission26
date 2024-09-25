@@ -7,6 +7,7 @@ const { isAdminAuthenticated } = require('../middleware/adminMiddlewares');
 const WebAppRouter=new express.Router();
 WebAppRouter.post("/post",isUserAuthenticated,PostWebApp);
 WebAppRouter.get("/getresult",isAdminAuthenticated,ResultWebapp);
+WebAppRouter.get("/get",isUserAuthenticated,GetWebApp);
 WebAppRouter.get("/",async(req,res)=>{
     res.send("webapp");
 })
