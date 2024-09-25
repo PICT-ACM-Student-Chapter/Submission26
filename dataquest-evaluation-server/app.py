@@ -8,6 +8,48 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+# @app.route('/dataquest-round-1', methods=['POST'])
+# def eval1():
+#     if request.method == 'POST':
+#         private_acc = 0
+#         public_acc = 0
+#         try:
+#             file_url = request.json['file_url']
+#             seniority = request.json['seniority']
+#             attempt = pd.read_csv(file_url)
+#             soln = pd.read_csv('dataquest-evaluation-server/Static/solution.csv')
+
+#             print(soln)
+
+#             private_acc = 0
+#             public_acc = 0
+
+#             if attempt.shape == soln.shape:
+#                 print("Fine till here")
+#                 attempt = attempt.iloc[:, 1].values
+#                 soln = soln.iloc[:, 1].values
+            
+#                 public_soln = soln[:1000]
+#                 public_att = attempt[:1000]
+
+#                 private_soln = soln[1000:]
+#                 private_att = attempt[1000:]
+#                 if(seniority == "FE" or seniority == "SE"):
+#                     public_acc = accuracy_score(public_soln, public_att)
+#                     private_acc = accuracy_score(private_soln, private_att)
+#                 else:
+#                     public_acc = f1_score(public_soln, public_att)
+#                     private_acc = f1_score(private_soln, private_att)
+                
+
+#             return {'private': private_acc,'public': public_acc}
+    
+#         except:
+
+#             return{
+#                 'private': -1,
+#                 'public': -1
+#             }
 @app.route('/dataquest-round-1', methods=['POST'])
 def eval1():
     if request.method == 'POST':
@@ -17,9 +59,9 @@ def eval1():
             file_url = request.json['file_url']
             seniority = request.json['seniority']
             attempt = pd.read_csv(file_url)
-            soln = pd.read_csv('Static/test_data_r1_server.csv')
+            soln = pd.read_csv("Static/solution.csv")
 
-            print(attempt.head)
+            print(soln)
 
             private_acc = 0
             public_acc = 0
@@ -34,23 +76,25 @@ def eval1():
 
                 private_soln = soln[1000:]
                 private_att = attempt[1000:]
-                if(seniority == "FE" or seniority == "SE"):
+
+                print("Public Solution:", public_soln)
+                print("Public Attempt:", public_att)
+                print("Private Solution:", private_soln)
+                print("Private Attempt:", private_att)
+
+                if seniority in ["FE", "SE"]:
                     public_acc = accuracy_score(public_soln, public_att)
                     private_acc = accuracy_score(private_soln, private_att)
                 else:
-                    public_acc = f1_score(public_soln, public_att)
-                    private_acc = f1_score(private_soln, private_att)
-                
+                    public_acc = f1_score(public_soln, public_att, average='binary')  # Adjust based on your classes
+                    private_acc = f1_score(private_soln, private_att, average='binary')  # Adjust as needed
 
-            return {'private': private_acc,'public': public_acc}
+            return {'private': private_acc, 'public': public_acc}
     
-        except:
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return {'private': -1, 'public': -1}
 
-            return{
-                'private': 0,
-                'public': 0
-            }
-        
 def rmse_tp(reg_soln, reg_att):                                 ## rmse true positives
     mse = mean_squared_error(reg_soln, reg_att)
     print(mse)
@@ -64,13 +108,13 @@ def eval2():
    if request.method == 'POST':
         private_acc = 0
         public_acc = 0
-        exec = 0
+        exec = 0 
         try:
             file_url = request.json['file_url']
             exec = 1
             attempt = pd.read_csv(file_url)
             exec = 2
-            soln = pd.read_csv('Static/r2_anskey.csv')
+            soln = pd.read_csv('Static/solution.csv')
             exec = 3
 
             
@@ -86,7 +130,11 @@ def eval2():
                 
                 private_soln = soln[1000:]
                 private_att = attempt[1000:]
-                
+                print("Public Solution:", public_soln)
+                print("Public Attempt:", public_att)
+                print("Private Solution:", private_soln)
+                print("Private Attempt:", private_att)
+
                 public_mse = r2_score(public_soln, public_att)
                 private_mse = r2_score(private_soln, private_att)
             return {'private': private_mse,'public': public_mse,'except':exec}

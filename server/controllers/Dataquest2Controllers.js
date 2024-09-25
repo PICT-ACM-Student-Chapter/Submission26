@@ -1,24 +1,27 @@
+const { default: axios } = require("axios");
+const client = require("../db/connect");
+
 const postDataQuest2= async (req, res) =>
     {
       console.log("in dataquest 2");
       const seniors = ["TE", "BE"];
       const { submission_csv } = req.body;
       const { submission_python } = req.body;
-      const ems_id = emsIds.dataquest;
+
       const date = new Date();
       const currDate = date.toDateString();
       try    
       {
-        const data = await client.query(
-          "SELECT * FROM user_events WHERE fk_user=$1 and ems_id=$2",
-          [req.user.id, ems_id]
-        );
-        if (data.rowCount === 0)
-        {
-          return res.status(400).send({
-            error: "User havent Registered ",
-          });
-        }
+        // const data = await client.query(
+        //   "SELECT * FROM user_events WHERE fk_user=$1 and ems_id=$2",
+        //   [req.user.id, ems_id]
+        // );
+        // if (data.rowCount === 0)
+        // {
+        //   return res.status(400).send({
+        //     error: "User havent Registered ",
+        //   });
+        // }
         const query = `select * from dataquest2 where fk_user = $1 and Date(created_at) = $2`;
         const result = await client.query(query, [req.user.id, currDate]);
         if (result.rowCount >= 12)
@@ -93,7 +96,7 @@ const GetDataQuest2=async (req, res) =>
             console.log(error);
             res.status(500).send({
               error: "Internal Server error",
-            });
+            }); 
           }
         };
 
@@ -110,7 +113,7 @@ const GetLeaderBoard2= async (req, res) =>
                     isSenior
                   );
                   if (response.rowCount <= 2)
-                  {
+                  {   
                     return res.status(400).send({
                       error: "Leaderboard is empty",
                     });

@@ -14,11 +14,11 @@ const signInUser=async (req, res) => {
         headers: {
             "Content-Type": "application/json",
         },
-        data: {
+        data: {         
             email,
             password
-        }, 
-    };
+        },                  
+    };  
     try {
         let response = await axios(options)
         let user = response.data.user;
@@ -110,7 +110,7 @@ const signoutUser= async (req, res) => {
         const query = "delete from user_token where token = $1";
         const params = [req.token];
         const data = await client.query(query, params);
-        if (data.rowCount === 1) {
+        if (data.rowCount === 1) { 
             return res.status(200).json({ success: "successfully logged out" });
         } else { 
             const response = await axios(options);

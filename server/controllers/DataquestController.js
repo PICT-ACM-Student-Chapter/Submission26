@@ -1,3 +1,4 @@
+const axios  = require("axios");
 const client = require("../db/connect");
 
 const PostDataQuest=async (req, res) => {
@@ -14,24 +15,24 @@ const PostDataQuest=async (req, res) => {
           error: "You have reached maximum submission limit for today.",
         });
       }
-      let options;
+      let options;       
       console.log("at 37",submission_csv)
       options = {
         method: "POST",
-        url: `${process.env.EVALUATION}/dataquest-round-1`,
+        url: `http://localhost:5000/dataquest-round-1`,
         headers: {
           "Content-Type": "application/json",
         },
         data: {
-          file_url: submission_csv,
-          seniority: req.user.year,
-        },
-      };
+          file_url: submission_csv,       
+          seniority: req.user.year,          
+        },   
+      };   
   
       const accData = await axios(options);
       console.log(accData);
       const private_accuracy = accData.data.private;
-      const public_accuracy = accData.data.public;
+      const public_accuracy = accData.data.public;         
       const response = await client.query(
         "INSERT INTO dataquest(fk_user, submission_csv, submission_python, private_accuracy, public_accuracy, active_submission, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, fk_user, submission_csv, submission_python, public_accuracy, created_at, updated_at",
         [
@@ -40,7 +41,7 @@ const PostDataQuest=async (req, res) => {
           submission_python,
           private_accuracy,
           public_accuracy,
-          true,
+          true, 
           new Date(),
           new Date(),
         ]
@@ -67,11 +68,11 @@ const GetDataQuest =async (req, res) => {
           error: "Nothing Submitted",
         });
       }
-      res.send({
+      res.send({     
         submissions: response.rows,
       });
-    } catch (error) {
-      console.log(error);
+    } catch (error) {    
+      console.log(error); 
       res.status(500).send({
         error: "Internal Server error",
       });

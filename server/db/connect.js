@@ -13,7 +13,7 @@ const client = new Client({
   ssl: {            
     rejectUnauthorized: false, // This is important for Neon database connections
   },  
-  port:5432  
+  port:5432        
 }); 
  
 client.on('connect', () => {
@@ -22,3 +22,4 @@ client.on('connect', () => {
 
 // Export the pool for use in other parts of the application
 module.exports = client; 
+ 

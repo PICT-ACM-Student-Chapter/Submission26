@@ -17,7 +17,7 @@ const PostFreeze= async (req, res) => {
         //     console.log("Common")
         //     return res.status(400).send({
                 
-        //         error: "User havent Registered "
+         //         error: "User havent Registered "
         //     })
         // } 
 

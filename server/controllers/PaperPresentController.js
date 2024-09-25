@@ -16,12 +16,12 @@ const postPaper = async (req, res) => {
                 error: "Entry Already Submitted",
             });
         } 
-
+    
         if (!paper_type || paper_type.trim() === "") {  
             return res.status(400).send({
                 error: "Paper Type not entered",   
             });
-        }
+        }       
 
         if (paper_type === "Idea Presentation Track") {
             if (!submission_abstract || submission_abstract.trim() === "") {
