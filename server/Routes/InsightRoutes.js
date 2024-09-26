@@ -7,7 +7,8 @@ const { isAdminAuthenticated } = require('../middleware/adminMiddlewares');
 
 const InsightRouter=new express.Router();
 InsightRouter.post('/post',isUserAuthenticated,postInsight);
-InsightRouter.get('/getresult',isAdminAuthenticated,ResultInsight);     
+InsightRouter.get('/getresult',isAdminAuthenticated,ResultInsight); 
+InsightRouter.get("/get",isUserAuthenticated,getInsight);   
 InsightRouter.get("/",async(req,res)=>{
     res.send("insight");
 })
