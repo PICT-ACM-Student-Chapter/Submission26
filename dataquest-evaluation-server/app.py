@@ -59,7 +59,7 @@ def eval1():
             file_url = request.json['file_url']
             seniority = request.json['seniority']
             attempt = pd.read_csv(file_url)
-            soln = pd.read_csv("Static/solution.csv")
+            soln = pd.read_csv("Static/round1.csv")
 
             print(soln)
 
@@ -118,7 +118,7 @@ def eval2():
             exec = 1
             attempt = pd.read_csv(file_url)
             exec = 2
-            soln = pd.read_csv('Static/solution.csv')
+            soln = pd.read_csv('Static/round2.csv')
             exec = 3
 
             
