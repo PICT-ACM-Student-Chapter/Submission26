@@ -89,7 +89,9 @@ const getAllSubmissionEvents = async (req,res) => {
 
 
 const FindStatus = async (req, res) => {
-    const route = req.params.route;
+    let route = req.params.route;
+    route="/"+route;
+
     try {
         const query = `SELECT event_status FROM submission_event WHERE event_route = $1`;
         const params = [route];
@@ -107,5 +109,4 @@ const FindStatus = async (req, res) => {
         res.status(500).json({ message: "Internal server error!" });
     }
 }
-
 module.exports={addSubmissonEvent,updateSubmissionEvent,deleteSubmissionEvent,getSubmissionEvents,getAllSubmissionEvents,FindStatus};
