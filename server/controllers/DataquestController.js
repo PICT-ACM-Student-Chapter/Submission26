@@ -85,7 +85,7 @@ const getLeaderBoard= async (req, res) => {
   try {
     
       const response = await client.query(
-        "select  users.first_name, users.last_name, MAX(dataquest.public_accuracy), users.email from dataquest join users on dataquest.fk_user = users.id where users.year = $1 or users.year = $2 group by users.first_name, users.last_name, users.email order by 3 DESC",
+        "select  users.first_name, users.last_name, MIN(dataquest.public_accuracy), users.email from dataquest join users on dataquest.fk_user = users.id where users.year = $1 or users.year = $2 group by users.first_name, users.last_name, users.email order by 3 DESC",
         isSenior
       );
       if (response.rowCount <= 2) {
