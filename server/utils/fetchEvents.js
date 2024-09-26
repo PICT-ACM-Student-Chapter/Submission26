@@ -140,7 +140,6 @@ async function FetchUserSubmissionEvents(ems_token, userId) {
     // Fetching events from EMS
     const response = await axios(options);
     let ems_events = response.data.events;
-
     // Fetching submission events (from another service or DB)
     const submission_events = await getSubmissionEvents();
 
