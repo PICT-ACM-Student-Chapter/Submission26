@@ -84,14 +84,14 @@ def eval1():
 
                 if seniority in ["FE", "SE"]:
                     print("accuracy score")
-                    public_acc = accuracy_score(public_soln, public_att)
+                    public_acc = mean_squared_error(public_soln, public_att)
                     print(public_acc)
-                    private_acc = accuracy_score(private_soln, private_att)
+                    private_acc = mean_squared_error(private_soln, private_att)
                     print(private_acc)
                 else:
                     console.log("f1_score")
-                    public_acc = f1_score(public_soln, public_att, average='binary')  # Adjust based on your classes
-                    private_acc = f1_score(private_soln, private_att, average='binary')  # Adjust as needed
+                    public_acc = mean_squared_error(public_soln, public_att) # Adjust based on your classes
+                    private_acc = mean_squared_error(private_soln, private_att) # Adjust as needed
 
             return {'private': private_acc, 'public': public_acc}
     
@@ -139,8 +139,8 @@ def eval2():
                 print("Private Solution:", private_soln)
                 print("Private Attempt:", private_att)
 
-                public_mse = r2_score(public_soln, public_att)
-                private_mse = r2_score(private_soln, private_att)
+                public_mse = f1_score(public_soln, public_att)
+                private_mse = f1_score(private_soln, private_att)
             return {'private': private_mse,'public': public_mse,'except':exec}
     
         except:
