@@ -92,8 +92,9 @@ const FindStatus=async(req,res)=>{
     const route=req.params.route;
     try {
         const query=`select event_status from submission_event where event_route=$1`;
-        const resonponse=await client.query(query,route);
-        res.status(200).json(resonponse);
+        const params=[route]
+        const response=await client.query(query,params);
+        res.status(200).json(response);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error!" });
