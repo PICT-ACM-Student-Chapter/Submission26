@@ -32,25 +32,28 @@ CREATE TYPE choice AS ENUM ('Technical', 'Non Technical');
 CREATE TYPE store AS ENUM ('Online', 'Offline', 'Blended');
 
 
+
+
 CREATE TABLE event (
-	id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
-	name VARCHAR(255) NOT NULL,
-	description TEXT NOT NULL,
-	type text,
-	mode text,
-	is_active BOOLEAN NOT NULL,
-   	play BOOLEAN NOT NULL,
-	price INT NOT NULL,
-   	link VARCHAR(255),
-	tagline VARCHAR(255) NOT NULL,
-	logo VARCHAR(255) NOT NULL,
-	rules TEXT NOT NULL,
-	rounds TEXT NOT NULL,
-	teams TEXT NOT NULL,
-	notes TEXT NOT NULL,
-	created_at TIMESTAMP NOT NULL,
-	updated_at TIMESTAMP NOT NULL
+  id INT PRIMARY KEY,  -- Manually managed primary key (must provide value during insert)
+  name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  type TEXT,
+  mode TEXT,
+  is_active BOOLEAN NOT NULL,
+  play BOOLEAN NOT NULL,
+  price INT NOT NULL,
+  link VARCHAR(255),
+  tagline VARCHAR(255) NOT NULL,
+  logo VARCHAR(255) NOT NULL,
+  rules TEXT NOT NULL,
+  rounds TEXT NOT NULL,
+  teams TEXT NOT NULL,
+  notes TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL
 );
+
 
 
 

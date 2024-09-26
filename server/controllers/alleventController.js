@@ -5,7 +5,7 @@ const GettingAllEvents = async (req, res) => {
     console.log("Fetching all events...");
     const options = {
         method: "GET",
-        url: `${process.env.ems_api}/events`,
+        url: `${process.env.EMS_API}/events`,
     };
     
     try {
