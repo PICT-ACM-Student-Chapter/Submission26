@@ -39,7 +39,7 @@ CREATE TABLE event (
   name VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
   type TEXT,
-  mode TEXT,
+  mode text, 
   is_active BOOLEAN NOT NULL,
   play BOOLEAN NOT NULL,
   price INT NOT NULL,

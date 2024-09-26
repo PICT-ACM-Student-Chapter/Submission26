@@ -1,6 +1,6 @@
 const axios=require("axios"); 
 const client = require("../db/connect");
-
+//
 const GettingAllEvents = async (req, res) => {
     console.log("Fetching all events...");
     const options = {
