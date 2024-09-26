@@ -56,7 +56,7 @@ const getInsight =async (req, res) => {
         );
 
         if (response.rowCount === 0) {
-            return res.status(400).send({
+            return res.status(200).send({
                 error: "Nothing Submitted"
             })
         }
