@@ -86,4 +86,27 @@ const getAllSubmissionEvents = async (req,res) => {
         throw new Error("Internal server error!");
     }
 };
-module.exports={addSubmissonEvent,updateSubmissionEvent,deleteSubmissionEvent,getSubmissionEvents,getAllSubmissionEvents};
+
+
+const FindStatus = async (req, res) => {
+    let route = req.params.route;
+    route="/"+route;
+
+    try {
+        const query = `SELECT event_status FROM submission_event WHERE event_route = $1`;
+        const params = [route];
+        const response = await client.query(query, params);
+
+        if (response.rows.length > 0) {
+            // Extract the status from the result and return as boolean
+            const status = response.rows[0].event_status;
+            res.status(200).json({ status });
+        } else {
+            res.status(404).json({ message: "Event not found" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error!" });
+    }
+}
+module.exports={addSubmissonEvent,updateSubmissionEvent,deleteSubmissionEvent,getSubmissionEvents,getAllSubmissionEvents,FindStatus};

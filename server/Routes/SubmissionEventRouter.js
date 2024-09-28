@@ -1,5 +1,5 @@
 const express =require('express');
-const { addSubmissonEvent, updateSubmissionEvent, deleteSubmissionEvent, getSubmissionEvents, getAllSubmissionEvents } = require('../controllers/SubmissionEventController');
+const { addSubmissonEvent, updateSubmissionEvent, deleteSubmissionEvent, getSubmissionEvents, getAllSubmissionEvents, FindStatus } = require('../controllers/SubmissionEventController');
 const { isAdminAuthenticated } = require('../middleware/adminMiddlewares');
 const SubmissionEventRouter=new express.Router();
 
@@ -10,7 +10,7 @@ SubmissionEventRouter.post("/post",isAdminAuthenticated,addSubmissonEvent);
 SubmissionEventRouter.patch("/update/:id",isAdminAuthenticated,updateSubmissionEvent);
 SubmissionEventRouter.delete("/delete/:id",isAdminAuthenticated,deleteSubmissionEvent);
 SubmissionEventRouter.get("/get",isAdminAuthenticated,getAllSubmissionEvents);
-
+SubmissionEventRouter.get("/:route",FindStatus)
 
 
 module.exports=SubmissionEventRouter;

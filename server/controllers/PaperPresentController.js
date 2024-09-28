@@ -78,7 +78,7 @@ const getPaper= async (req, res) => {
             [req.user.id]
         );
         if (response.rowCount === 0) {
-            return res.status(400).send({
+            return res.status(200).send({
                 error: "Nothing Submitted"
             })
         }
