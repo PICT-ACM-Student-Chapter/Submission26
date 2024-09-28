@@ -57,7 +57,7 @@ def eval1():
         public_acc = 0
         try:
             file_url = request.json['file_url']
-            seniority = request.json['seniority']
+            # seniority = request.json['seniority']
             attempt = pd.read_csv(file_url)
             soln = pd.read_csv("Static/round1.csv")
 
@@ -77,21 +77,21 @@ def eval1():
                 private_soln = soln[1000:]
                 private_att = attempt[1000:]
 
-                print("Public Solution:", public_soln)
-                print("Public Attempt:", public_att)
-                print("Private Solution:", private_soln)
-                print("Private Attempt:", private_att)
+                # print("Public Solution:", public_soln)
+                # print("Public Attempt:", public_att)
+                # print("Private Solution:", private_soln)
+                # print("Private Attempt:", private_att)
 
-                if seniority in ["FE", "SE"]:
-                    print("accuracy score")
-                    public_acc = mean_squared_error(public_soln, public_att)
-                    print(public_acc)
-                    private_acc = mean_squared_error(private_soln, private_att)
-                    print(private_acc)
-                else:
-                    console.log("f1_score")
-                    public_acc = mean_squared_error(public_soln, public_att) # Adjust based on your classes
-                    private_acc = mean_squared_error(private_soln, private_att) # Adjust as needed
+                # if seniority in ["FE", "SE"]:
+                print("accuracy score")
+                public_acc = mean_squared_error(public_soln, public_att)
+                print(public_acc)
+                private_acc = mean_squared_error(private_soln, private_att)
+                print(private_acc)
+                # else:
+                    # print("f1_score")
+                    # public_acc = mean_squared_error(public_soln, public_att) # Adjust based on your classes
+                    # private_acc = mean_squared_error(private_soln, private_att) # Adjust as needed
 
             return {'private': private_acc, 'public': public_acc}
     
@@ -103,9 +103,14 @@ def rmse_tp(reg_soln, reg_att):                                 ## rmse true pos
     mse = mean_squared_error(reg_soln, reg_att)
     print(mse)
     return mse
-
-
-
+@app.route('/is_up', methods=['GET'])
+def dummy():
+    print("eval_called")
+    return {
+        "message":"hello world!!",
+        'private': -1, 
+        'public': -1
+    }
 @app.route('/te-be-round-2', methods=['POST'])
 def eval2():
 
