@@ -12,21 +12,12 @@ const postDataQuest2= async (req, res) =>
       const currDate = date.toDateString();
       try    
       {
-        // const data = await client.query(
-        //   "SELECT * FROM user_events WHERE fk_user=$1 and ems_id=$2",
-        //   [req.user.id, ems_id]
-        // );
-        // if (data.rowCount === 0)
-        // {
-        //   return res.status(400).send({
-        //     error: "User havent Registered ",
-        //   });
-        // }
+        
         const query = `select * from dataquest2 where fk_user = $1 and Date(created_at) = $2`;
         const result = await client.query(query, [req.user.id, currDate]);
         if (result.rowCount >= 10)
         {
-          return res.status(400).send({
+          return res.status(200).send({
             error: "You have reached maximum submission limit for today.",
           });
         }
@@ -34,7 +25,7 @@ const postDataQuest2= async (req, res) =>
     
         options = {
           method: "POST",
-          url: `http://localhost:5000/te-be-round-2`,
+          url: `http://evaluation:5000/te-be-round-2`,
           headers: {
             "Content-Type": "application/json",
           },
