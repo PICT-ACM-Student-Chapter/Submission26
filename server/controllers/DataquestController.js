@@ -162,7 +162,7 @@ const getLeaderBoard = async (req, res) => {
         JOIN users ON dataquest.fk_user = users.id 
         WHERE users.year IN ($1, $2) 
         GROUP BY users.first_name, users.last_name, users.email 
-        ORDER BY 3 ASC`;
+        ORDER BY 3 ASC limit 3`;
       params = seniors;
     } else {
       // Query for juniors (FE and SE)
@@ -172,7 +172,7 @@ const getLeaderBoard = async (req, res) => {
         JOIN users ON dataquest.fk_user = users.id 
         WHERE users.year IN ('FE', 'SE') 
         GROUP BY users.first_name, users.last_name, users.email 
-        ORDER BY 3 ASC`;
+        ORDER BY 3 ASC limit 3`;
       params = [];
     }
 
