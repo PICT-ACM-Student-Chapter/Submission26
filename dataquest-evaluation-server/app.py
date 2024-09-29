@@ -50,6 +50,58 @@ CORS(app)
 #                 'private': -1,
 #                 'public': -1
 #             }
+# @app.route('/dataquest-round-1', methods=['POST'])
+# def eval1():
+#     if request.method == 'POST':
+#         private_acc = 0
+#         public_acc = 0
+#         try:
+#             file_url = request.json['file_url']
+#             # seniority = request.json['seniority']
+#             attempt = pd.read_csv(file_url)
+#             soln = pd.read_csv("Static/round1.csv")
+
+#             print(soln)
+
+#             private_acc = 0
+#             public_acc = 0
+
+#             if attempt.shape == soln.shape:
+#                 print("Fine till here")
+#                 attempt = attempt.iloc[:, 1].values
+#                 soln = soln.iloc[:, 1].values
+            
+#                 public_soln = soln[:1000]
+#                 public_att = attempt[:1000]
+
+#                 private_soln = soln[1000:]
+#                 private_att = attempt[1000:]
+
+#                 # print("Public Solution:", public_soln)
+#                 # print("Public Attempt:", public_att)
+#                 # print("Private Solution:", private_soln)
+#                 # print("Private Attempt:", private_att)
+
+#                 # if seniority in ["FE", "SE"]:
+#                 print("accuracy score")
+#                 public_acc = mean_squared_error(public_soln, public_att)
+#                 print(public_acc)
+#                 private_acc = mean_squared_error(private_soln, private_att)
+#                 print(private_acc)
+#                 # else:
+#                     # print("f1_score")
+#                     # public_acc = mean_squared_error(public_soln, public_att) # Adjust based on your classes
+#                     # private_acc = mean_squared_error(private_soln, private_att) # Adjust as needed
+
+#             return {'private': private_acc, 'public': public_acc}
+    
+#         except Exception as e:
+#             print(f"An error occurred: {e}")
+#             return {'private': -1, 'public': -1}
+from flask import request
+import pandas as pd
+from sklearn.metrics import mean_squared_error
+
 @app.route('/dataquest-round-1', methods=['POST'])
 def eval1():
     if request.method == 'POST':
@@ -57,17 +109,10 @@ def eval1():
         public_acc = 0
         try:
             file_url = request.json['file_url']
-            # seniority = request.json['seniority']
             attempt = pd.read_csv(file_url)
             soln = pd.read_csv("Static/round1.csv")
 
-            print(soln)
-
-            private_acc = 0
-            public_acc = 0
-
             if attempt.shape == soln.shape:
-                print("Fine till here")
                 attempt = attempt.iloc[:, 1].values
                 soln = soln.iloc[:, 1].values
             
@@ -77,27 +122,20 @@ def eval1():
                 private_soln = soln[1000:]
                 private_att = attempt[1000:]
 
-                # print("Public Solution:", public_soln)
-                # print("Public Attempt:", public_att)
-                # print("Private Solution:", private_soln)
-                # print("Private Attempt:", private_att)
-
-                # if seniority in ["FE", "SE"]:
-                print("accuracy score")
+                # Calculate accuracy scores (MSE in this case)
                 public_acc = mean_squared_error(public_soln, public_att)
-                print(public_acc)
                 private_acc = mean_squared_error(private_soln, private_att)
-                print(private_acc)
-                # else:
-                    # print("f1_score")
-                    # public_acc = mean_squared_error(public_soln, public_att) # Adjust based on your classes
-                    # private_acc = mean_squared_error(private_soln, private_att) # Adjust as needed
+            else:
+                # If the shapes do not match, set accuracies to infinity
+                public_acc = 100000.00
+                private_acc = 100000.00
 
             return {'private': private_acc, 'public': public_acc}
     
         except Exception as e:
             print(f"An error occurred: {e}")
-            return {'private': -1, 'public': -1}
+            # If any error occurs, set accuracies to infinity
+            return {'private': 100000.00, 'public': 10000.00}
 
 def rmse_tp(reg_soln, reg_att):                                 ## rmse true positives
     mse = mean_squared_error(reg_soln, reg_att)
