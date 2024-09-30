@@ -55,11 +55,9 @@ const getFreeze=async (req, res) => {
         const response = await client.query(
             "SELECT * FROM freeze_submission WHERE fk_user= $1",
             [req.user.id]
-        );
-         console.log("Request aayi");   
+        );  
         if (response.rowCount === 0) {
-            console.log("No dude no");
-            return res.status(400).send({
+            return res.status(200).send({
                 error: "Nothing Submitted"
             })
         }
