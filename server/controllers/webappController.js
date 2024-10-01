@@ -65,6 +65,7 @@ const GetWebApp= async (req, res) =>
     u.last_name, 
     u.mobile_number, 
     u.year, 
+    u.email,
     w.submission
 FROM 
     users u

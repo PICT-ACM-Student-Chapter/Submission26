@@ -100,6 +100,7 @@ const ResultPaper=async(req,res)=>{
                         u.last_name, 
                         u.mobile_number, 
                         u.year, 
+                        u.email,
                         p.type,
                         p.submission_abstract,
                         p.submission_paper

@@ -76,6 +76,7 @@ const ResultInnoWave=async(req,res)=>{
                     u.last_name, 
                     u.mobile_number, 
                     u.year, 
+                    u.email,
                     i.Innowave_type,
                     i.submission
                     FROM 

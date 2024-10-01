@@ -83,7 +83,8 @@ const ResultFreeze=async(req,res)=>{
                     u.first_name, 
                     u.last_name, 
                     u.mobile_number, 
-                    u.year, 
+                    u.year,
+                    u.email,
                     f.submission
                     FROM 
                     users u

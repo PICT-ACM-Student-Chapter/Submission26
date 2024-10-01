@@ -81,6 +81,7 @@ const ResultInsight=async(req,res)=>{
                     u.last_name, 
                     u.mobile_number, 
                     u.year, 
+                    u.email,
                     i.topic,
                     i.submission
                     FROM 
