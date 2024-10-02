@@ -7,7 +7,7 @@ const DQ2Router=new express.Router();
 
 
 DQ2Router.post("/post",isUserAuthenticated,postDataQuest2);
-DQ2Router.get('/leaderboard',isAdminAuthenticated,GetLeaderBoard2);
+DQ2Router.get('/leaderboard',isUserAuthenticated,GetLeaderBoard2);
 DQ2Router.get("/get",isUserAuthenticated,GetDataQuest2);
 
 

@@ -151,47 +151,57 @@ def dummy():
     }
 @app.route('/te-be-round-2', methods=['POST'])
 def eval2():
-
-   if request.method == 'POST':
-        private_acc = 0
-        public_acc = 0
-        exec = 0 
+    if request.method == 'POST':
+        private_f1 = 0
+        public_f1 = 0
+        exec_stage = 0  # Tracks the stage of execution for debugging
         try:
-            file_url = request.json['file_url']
-            exec = 1
-            attempt = pd.read_csv(file_url)
-            exec = 2
-            soln = pd.read_csv('Static/round2.csv')
-            exec = 3
+            # Step 1: Retrieve the file URL
+            file_url = request.json.get('file_url')
+            exec_stage = 1
 
-            
-            exec = attempt.shape
+            # Step 2: Read the attempt and solution CSV files
+            attempt = pd.read_csv(file_url)
+            exec_stage = 2
+            soln = pd.read_csv('Static/round2.csv')
+            exec_stage = 3
+
+            # Step 3: Ensure the shape of both dataframes is the same
             if attempt.shape == soln.shape:
-                
-                print("Fine till here")
-                attempt = attempt.iloc[:, 1].values
-                soln = soln.iloc[:, 1].values
-                
-                public_soln = soln[:1000]
-                public_att = attempt[:1000]
-                
-                private_soln = soln[1000:]
-                private_att = attempt[1000:]
+                print("Shapes match. Proceeding further.")
+
+                # Step 4: Extract the second column (assumed to be the relevant data)
+                attempt_values = attempt.iloc[:, 1].values
+                soln_values = soln.iloc[:, 1].values
+
+                # Split data into public and private sets
+                public_soln = soln_values[:1000]
+                public_att = attempt_values[:1000]
+
+                private_soln = soln_values[1000:]
+                private_att = attempt_values[1000:]
+
                 print("Public Solution:", public_soln)
                 print("Public Attempt:", public_att)
                 print("Private Solution:", private_soln)
                 print("Private Attempt:", private_att)
 
-                public_mse = f1_score(public_soln, public_att)
-                private_mse = f1_score(private_soln, private_att)
-            return {'private': private_mse,'public': public_mse,'except':exec}
-    
-        except:
+                # Step 5: Calculate F1 scores for public and private datasets
+                public_f1 = f1_score(public_soln, public_att, average='weighted')
+                private_f1 = f1_score(private_soln, private_att, average='weighted')
 
-            return{
+            return {
+                'private': private_f1,
+                'public': public_f1,
+                'except': exec_stage  # Return the stage of execution for debugging
+            }
+
+        except Exception as e:
+            print(f"Error encountered at stage {exec_stage}: {e}")
+            return {
                 'private': 0,
                 'public': 0,
-                'except' : exec
+                'except': exec_stage  # Return the stage where the error occurred
             }
 
       
