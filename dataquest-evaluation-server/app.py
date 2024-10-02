@@ -111,6 +111,8 @@ def eval1():
             file_url = request.json['file_url']
             attempt = pd.read_csv(file_url)
             soln = pd.read_csv("Static/round1.csv")
+            print(attempt.shape)
+            print(soln.shape)
 
             if attempt.shape == soln.shape:
                 attempt = attempt.iloc[:, 1].values
