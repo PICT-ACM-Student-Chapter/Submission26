@@ -15,7 +15,7 @@ const postDataQuest2= async (req, res) =>
         
         const query = `select * from dataquest2 where fk_user = $1 and Date(created_at) = $2`;
         const result = await client.query(query, [req.user.id, currDate]);
-        if (result.rowCount >= 5)
+        if (result.rowCount >= 6)
         {
           return res.status(200).send({
             error: "You have reached maximum submission limit for today.",
