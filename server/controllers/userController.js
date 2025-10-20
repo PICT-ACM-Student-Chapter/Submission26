@@ -10,7 +10,7 @@ const signInUser=async (req, res) => {
     console.log(`password : ${password}`); 
     const options = {
         method: "POST",
-        url: `${process.env.EMS_API}/user/signin`,
+        url: `${process.env.EMS_API}/user/app/signin`,
         headers: {
             "Content-Type": "application/json",
         },
@@ -100,7 +100,7 @@ WHERE
 const signoutUser= async (req, res) => {    
     const options = {
         method: "POST",
-        url: `${process.env.EMS_API}/user/signout`,
+        url: `${process.env.EMS_API}/user/app/signout`,
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${req.ems_token}`,

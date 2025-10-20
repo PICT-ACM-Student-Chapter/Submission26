@@ -6,7 +6,7 @@ const UserRouter=new express.Router();
 
 //write your routes here 
 
-UserRouter.post('/sign',signInUser);
+UserRouter.post('/signin',signInUser);
 UserRouter.delete('/signout',isUserAuthenticated,signoutUser);
 UserRouter.get("/me",isUserAuthenticated,me)
 UserRouter.get("/user_events",isUserAuthenticated,GetUserEvent);

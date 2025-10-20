@@ -1,0 +1,18 @@
+{
+  "name": "submission22-backend",
+  "version": "1.0.0",
+  "description": "Backend server for submission22 with Docker development environment",
+  "private": true,
+  "scripts": {
+    "start": "docker-compose -f docker-compose.dev.yml up",
+    "build": "docker-compose -f docker-compose.dev.yml build",
+    "dev": "npm run build && npm start",
+    "stop": "docker-compose -f docker-compose.dev.yml down",
+    "restart": "npm run stop && npm run dev",
+    "logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "clean": "docker-compose -f docker-compose.dev.yml down -v --remove-orphans"
+  },
+  "keywords": ["docker", "nodejs", "express", "postgres"],
+  "author": "",
+  "license": "ISC"
+}

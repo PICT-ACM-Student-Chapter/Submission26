@@ -1,12 +1,12 @@
-from flask import Flask, request
-import os
-import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score, mean_squared_error,r2_score
-import numpy as np
-from flask_cors import CORS
+# from flask import Flask, request
+# import os
+# import pandas as pd
+# from sklearn.metrics import accuracy_score, f1_score, mean_squared_error,r2_score
+# import numpy as np
+# from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
+# app = Flask(__name__)
+# CORS(app)
 
 # @app.route('/dataquest-round-1', methods=['POST'])
 # def eval1():
@@ -98,113 +98,128 @@ CORS(app)
 #         except Exception as e:
 #             print(f"An error occurred: {e}")
 #             return {'private': -1, 'public': -1}
-from flask import request
-import pandas as pd
-from sklearn.metrics import mean_squared_error
 
+
+from flask import Flask, request
+import os
+import pandas as pd
+from sklearn.metrics import accuracy_score, f1_score, mean_squared_error
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+# ----------------------------
+# ✅ Health Check Route
+# ----------------------------
+@app.route('/')
+def health_check():
+    return {"status": "ok"}, 200
+
+
+# ----------------------------
+# 🧩 ROUND 1 (Classification)
+# ----------------------------
 @app.route('/dataquest-round-1', methods=['POST'])
 def eval1():
-    if request.method == 'POST':
-        private_acc = 0
-        public_acc = 0
-        try:
-            file_url = request.json['file_url']
-            attempt = pd.read_csv(file_url)
-            soln = pd.read_csv("Static/round1.csv")
-            print(attempt.shape)
-            print(soln.shape)
+    try:
+        file_url = request.json['file_url']
+        attempt = pd.read_csv(file_url)
+        soln = pd.read_csv("Static/round1Final.csv")
 
-            if attempt.shape == soln.shape:
-                attempt = attempt.iloc[:, 1].values
-                soln = soln.iloc[:, 1].values
-            
-                public_soln = soln[:1000]
-                public_att = attempt[:1000]
+        print(f"[ROUND1] Attempt shape: {attempt.shape}")
+        print(f"[ROUND1] Solution shape: {soln.shape}")
 
-                private_soln = soln[1000:]
-                private_att = attempt[1000:]
+        # shape check
+        if attempt.shape != soln.shape:
+            return {
+                'public': {'f1_score': 0.0},
+                'private': {'f1_score': 0.0},
+                'error': 'Shape mismatch'
+            }
 
-                # Calculate accuracy scores (MSE in this case)
-                public_acc = mean_squared_error(public_soln, public_att)
-                private_acc = mean_squared_error(private_soln, private_att)
-            else:
-                # If the shapes do not match, set accuracies to infinity
-                public_acc = 100000.00
-                private_acc = 100000.00
+        # Extract predicted and true labels
+        attempt_values = attempt.iloc[:, 1].values
+        true_values = soln.iloc[:, 1].values
 
-            return {'private': private_acc, 'public': public_acc}
-    
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            # If any error occurs, set accuracies to infinity
-            return {'private': 100000.00, 'public': 10000.00}
+        # Split public/private data (first 1000 public)
+        public_soln = true_values[:1000]
+        public_att = attempt_values[:1000]
+        private_soln = true_values[1000:]
+        private_att = attempt_values[1000:]
 
-def rmse_tp(reg_soln, reg_att):                                 ## rmse true positives
-    mse = mean_squared_error(reg_soln, reg_att)
-    print(mse)
-    return mse
-@app.route('/is_up', methods=['GET'])
-def dummy():
-    print("eval_called")
-    return {
-        "message":"hello world!!",
-        'private': -1, 
-        'public': -1
-    }
+        # Calculate scores (macro F1 only)
+        public_f1 = f1_score(public_soln, public_att, average='macro')
+        private_f1 = f1_score(private_soln, private_att, average='macro')
+
+        return {
+            'public': {'f1_score': float(public_f1)},
+            'private': {'f1_score': float(private_f1)}
+        }
+
+    except Exception as e:
+        print(f"[ERROR ROUND1] {e}")
+        return {
+            'public': {'f1_score': 0.0},
+            'private': {'f1_score': 0.0},
+            'error': str(e)
+        }
+
+
+
 @app.route('/te-be-round-2', methods=['POST'])
 def eval2():
-    if request.method == 'POST':
-        private_f1 = 0
-        public_f1 = 0
-        exec_stage = 0  # Tracks the stage of execution for debugging
-        try:
-            # Step 1: Retrieve the file URL
-            file_url = request.json.get('file_url')
-            exec_stage = 1
+    try:
+        file_url = request.json['file_url']
+        attempt = pd.read_csv(file_url)
+        soln = pd.read_csv('Static/round2Final.csv')
 
-            # Step 2: Read the attempt and solution CSV files
-            attempt = pd.read_csv(file_url)
-            exec_stage = 2
-            soln = pd.read_csv('Static/new_ans.csv')
-            exec_stage = 3
+        print(f"[ROUND2] Attempt shape: {attempt.shape}")
+        print(f"[ROUND2] Solution shape: {soln.shape}")
 
-            # Step 3: Ensure the shape of both dataframes is the same
-            if attempt.shape == soln.shape:
-                print("Shapes match. Proceeding further.")
-
-                # Step 4: Extract the second column (assumed to be the relevant data)
-                attempt_values = attempt.iloc[:, 1].values
-                soln_values = soln.iloc[:, 1].values
-
-                # Split data into public and private sets
-                public_soln = soln_values[:1000]
-                public_att = attempt_values[:1000]
-
-                private_soln = soln_values[1000:]
-                private_att = attempt_values[1000:]
-
-                print("Public Solution:", public_soln)
-                print("Public Attempt:", public_att)
-                print("Private Solution:", private_soln)
-                print("Private Attempt:", private_att)
-
-                # Step 5: Calculate F1 scores for public and private datasets
-                public_f1 = f1_score(public_soln, public_att, average='weighted')
-                private_f1 = f1_score(private_soln, private_att, average='weighted')
-
+        # shape check
+        if attempt.shape != soln.shape:
             return {
-                'private': private_f1,
-                'public': public_f1,
-                'except': exec_stage  # Return the stage of execution for debugging
+                'public': {'f1_score': 0.0},
+                'private': {'f1_score': 0.0},
+                'error': 'Shape mismatch'
             }
 
-        except Exception as e:
-            print(f"Error encountered at stage {exec_stage}: {e}")
-            return {
-                'private': 0,
-                'public': 0,
-                'except': exec_stage  # Return the stage where the error occurred
-            }
+        attempt_values = attempt.iloc[:, 1].values
+        soln_values = soln.iloc[:, 1].values
+
+        # 70%-30% public-private split
+        pr_mark = int(soln.shape[0] * 0.7)
+        public_soln = soln_values[:pr_mark]
+        public_att = attempt_values[:pr_mark]
+        private_soln = soln_values[pr_mark:]
+        private_att = attempt_values[pr_mark:]
+
+        # Metrics (macro F1 only, to match Round 1)
+        public_f1 = f1_score(public_soln, public_att, average='macro')
+        private_f1 = f1_score(private_soln, private_att, average='macro')
+
+        return {
+            'public': {'f1_score': float(public_f1)},
+            'private': {'f1_score': float(private_f1)}
+        }
+
+    except Exception as e:
+        print(f"[ERROR ROUND2] {e}")
+        return {
+            'public': {'f1_score': 0.0},
+            'private': {'f1_score': 0.0},
+            'error': str(e)
+        }
+
+
+# ----------------------------
+# 🚀 Run App
+# ----------------------------
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
+
 
       
 # if _name_ == "_main_":
