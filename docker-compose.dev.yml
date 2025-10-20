@@ -18,7 +18,8 @@ services:
     command: >
       sh -c "npm install && NODE_ENV=dev npm run dev"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
       # - mongo
 
   postgres:
@@ -26,6 +27,13 @@ services:
     image: postgres
     env_file:
       - ./server/.env.dev
+    environment:
+      - POSTGRES_DB=submission
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes: 
       - ./server/db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
 

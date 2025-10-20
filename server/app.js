@@ -8,27 +8,27 @@ var cors = require("cors");
 const cron = require("node-cron");
 require('dotenv').config();
 const port = 3001 || process.env.port;
-const AdminRouter = require("./Routes/AdminRoutes");   
-const UserRouter = require("./Routes/UserRoutes");
-const DQRouter = require("./Routes/DataquestRoutes");
-const FreezeRouter = require("./Routes/FreezeRoutes"); 
-const alleventRouter = require("./Routes/AlleventRoutes");
-const InsightRouter = require("./Routes/InsightRoutes");
-const WebAppRouter = require("./Routes/WebAppRoutes");
-const PhotoShopRouter = require("./Routes/PhotoShopRoutes");
-const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
-const InnowaveRouter = require("./Routes/InnowaveRoutes");
+const AdminRouter = require("./routes/adminRoutes");
+const UserRouter = require("./routes/UserRoutes");
+const DQRouter = require("./routes/DataquestRoutes");
+const FreezeRouter = require("./routes/FreezeRoutes");
+const alleventRouter = require("./routes/AlleventRoutes");
+const InsightRouter = require("./routes/InsightRoutes");
+const WebAppRouter = require("./routes/WebAppRoutes");
+const PhotoShopRouter = require("./routes/PhotoShopRoutes");
+const SubmissionEventRouter = require("./routes/SubmissionEventRouter");
+const InnowaveRouter = require("./routes/InnowaveRoutes");
 const { configDotenv } = require("dotenv");
-const PaperRouter = require("./Routes/PaperPresentRoutes");
-const DQ2Router = require("./Routes/DataQuest2Routes");
-const Innowave2Router = require("./Routes/Innowave2Routes");
+const PaperRouter = require("./routes/PaperPresentRoutes");
+const DQ2Router = require("./routes/DataQuest2Routes");
+const Innowave2Router = require("./routes/Innowave2Routes");
 const client = require("./db/connect");
 // const Innowave2Router = require("./Routes/Innnovave2Routes");
 // const DQ2Router = require("./routes/DataQuest2Routes");
-const app = express();    
+const app = express();
 
 
-app.use(cors());    
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -48,7 +48,7 @@ app.use("/submission",SubmissionEventRouter);
 app.use("/innowave",InnowaveRouter);
 app.use("/paper",PaperRouter);
 app.use("/innowave2",Innowave2Router);
-app.use("/dataquest",DQRouter);           
+app.use("/dataquest",DQRouter);
 app.use("/dataquest2",DQ2Router);
 client
   .connect()
@@ -61,10 +61,10 @@ app.get("/", async (req, res) => {
 // Schedule a cron job to run every day at midnight (example: '0 0 * * *' for midnight)
 cron.schedule("* * * * *", async () => {
   console.log("Cron job is running ");
-        
+
   // You can perform your database operations or other tasks here
 });
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port} http://localhost:${port}`);
-}); 
+});

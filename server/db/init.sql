@@ -1,4 +1,3 @@
-CREATE DATABASE submission;
 
 \c submission;
 
