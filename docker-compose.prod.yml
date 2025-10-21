@@ -1,21 +1,6 @@
 version: "3.9"
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-submission}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-submission}
-      POSTGRES_DB: ${POSTGRES_DB:-submission}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   server:
     container_name: server
     build:
@@ -24,17 +9,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: ${POSTGRES_USER:-submission}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-submission}
+      DATABASE_URL: ${DATABASE_URL}
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
       AWS_SECRET_KEY: ${AWS_SECRET_KEY}
       AWS_BUCKET: ${AWS_BUCKET}
       AWS_REGION: ${AWS_REGION}
-    depends_on:
-      postgres:
-        condition: service_healthy
     expose:
       - "3001"
     healthcheck:
@@ -75,6 +54,3 @@ services:
       timeout: 5s
       retries: 5
 
-volumes:
-  postgres_data:
-    driver: local

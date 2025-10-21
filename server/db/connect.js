@@ -1,28 +1,15 @@
 const { Client } = require("pg");
-const fs = require("fs");
 
-const configDev = {
-  host: process.env.POSTGRES_HOST,
-  user: process.env.POSTGRES_USER,
-  port: process.env.POSTGRES_PORT,
-  // connectionTimeoutMillis: 2000,
-  password: process.env.POSTGRES_PASSWORD,
-  database: "submission",
+// Neon DB configuration - works for both dev and production
+const neonConfig = {
+  connectionString: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_x9Cekbpz3VdE@ep-winter-butterfly-aej1wis2-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+  ssl: {
+    rejectUnauthorized: false,
+  },
 };
-console.log(process.env.CONN_STRING);
-// const configProd = {
-//   connectionString: process.env.CONN_STRING,
-//   ssl: {
-//     rejectUnauthorized: false,
-//     ca: fs.readFileSync("ca-certificate.crt").toString(),
-//   },
-// };
 
-// const configProd = {};s
+console.log("Connecting to Neon DB...");
 
-const client = new Client(
-  //process.env.NODE_ENV === "dev" ? configDev : configProd
-  configDev
-); 
+const client = new Client(neonConfig); 
 
 module.exports = client;
