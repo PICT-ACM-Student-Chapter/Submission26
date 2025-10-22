@@ -96,8 +96,8 @@ const PostDataQuest=async (req, res) => {
     const accData = await axios(options);
    // console.log("error")
     //console.log(accData);
-    const private_accuracy = accData.data.private;
-    const public_accuracy = accData.data.public;
+    const private_accuracy = accData.data.private.f1_score;
+    const public_accuracy = accData.data.public.f1_score;
     console.log(private_accuracy);
     console.log(public_accuracy);     
     const response = await client.query(

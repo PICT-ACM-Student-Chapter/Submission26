@@ -15,7 +15,7 @@ const postDataQuest2= async (req, res) =>
         
         const query = `select * from dataquest2 where fk_user = $1 and Date(created_at) = $2`;
         const result = await client.query(query, [req.user.id, currDate]);
-        if (result.rowCount >= 6)
+        if (result.rowCount >= 3)
         {
           return res.status(200).send({
             error: "You have reached maximum submission limit for today.",
@@ -37,8 +37,8 @@ const postDataQuest2= async (req, res) =>
         console.log("No error at line 48");
         const accData = await axios(options);
         console.log("No error at line 50");
-        const private_accuracy = accData.data.private;
-        const public_accuracy = accData.data.public;
+        const private_accuracy = accData.data.private.f1_score;
+        const public_accuracy = accData.data.public.f1_score;
         const p = accData.data.except;
         console.log(p);
         const response = await client.query(
@@ -91,50 +91,54 @@ const GetDataQuest2=async (req, res) =>
           }
         };
 
-const GetLeaderBoard2= async (req, res) =>
-            {
-              const seniors = ["TE", "BE"];
-              const isSenior = seniors.includes(req.user.year) ? seniors : ["FE", "SE"];
-              try
-              {
-                if (seniors.includes(req.user.year))
-                {
-                  const response = await client.query(
-                    "select  users.first_name, users.last_name, MAX(dataquest2.public_accuracy), users.email from dataquest2 join users on dataquest2.fk_user = users.id where users.year = $1 or users.year = $2 group by users.first_name, users.last_name, users.email order by 3 DESC limit 3",
-                    isSenior
-                  );
-                  if (response.rowCount <= 2)
-                  {   
-                    return res.status(400).send({
-                      error: "Leaderboard is empty",
-                    });
-                  }
-                  res.send({
-                    submissions: response.rows,
-                  });
-                } else
-                {
-                  const response = await client.query(
-                    "select  users.first_name, users.last_name, MAX(dataquest.public_accuracy), users.email from dataquest join users on dataquest.fk_user = users.id where users.year = $1 or users.year = $2 group by users.first_name, users.last_name, users.email order by 3 DESC limit 3",
-                    isSenior
-                  );
-                  if (response.rowCount <= 2)
-                  {
-                    return res.status(400).send({
-                      error: "Leaderboard is empty",
-                    });
-                  }
-                  res.send({
-                    submissions: response.rows,
-                  });
-                }
-              } catch (error)
-              {
-                console.log(error);
-                res.status(500).send({
-                  error: "Internal Server error",
-                });
-              }
-            };
-
+const GetLeaderBoard2 = async (req, res) => {
+  const seniors = ["TE", "BE"];
+  const isSenior = seniors.includes(req.user.year);
+  
+  try {
+    let query;
+    let params;
+    
+    if (isSenior) {
+      // Query for seniors (TE and BE) - Round 2
+      query = `
+        SELECT users.first_name, users.last_name, MAX(dataquest2.public_accuracy) as max, users.email 
+        FROM dataquest2 
+        JOIN users ON dataquest2.fk_user = users.id 
+        WHERE users.year = $1 OR users.year = $2 
+        GROUP BY users.first_name, users.last_name, users.email 
+        ORDER BY max DESC 
+        LIMIT 3`;
+      params = seniors;
+    } else {
+      // Query for juniors (FE and SE) - Round 2
+      query = `
+        SELECT users.first_name, users.last_name, MAX(dataquest2.public_accuracy) as max, users.email 
+        FROM dataquest2 
+        JOIN users ON dataquest2.fk_user = users.id 
+        WHERE users.year = 'FE' OR users.year = 'SE' 
+        GROUP BY users.first_name, users.last_name, users.email 
+        ORDER BY max DESC 
+        LIMIT 3`;
+      params = [];
+    }
+    
+    const response = await client.query(query, params);
+    
+    if (response.rowCount === 0) {
+      return res.status(400).send({
+        error: "Leaderboard is empty",
+      });
+    }
+    
+    res.send({
+      submissions: response.rows,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      error: "Internal Server error",
+    });
+  }
+};
 module.exports={postDataQuest2,GetLeaderBoard2,GetDataQuest2}

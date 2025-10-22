@@ -6,6 +6,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile.prod
+    dns:
+      - 8.8.8.8
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -14,8 +16,11 @@ services:
       AWS_SECRET_KEY: ${AWS_SECRET_KEY}
       AWS_BUCKET: ${AWS_BUCKET}
       AWS_REGION: ${AWS_REGION}
-    expose:
-      - "3001"
+      EMS_API: ${EMS_API}
+      TOKEN_SECRET: ${TOKEN_SECRET}
+      EVALUATION: ${EVALUATION}
+    ports:
+      - "3001:3001"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/"]
       interval: 10s
@@ -28,8 +33,8 @@ services:
       context: ./dataquest-evaluation-server
     environment:
       PORT: 5000
-    expose:
-      - "5000"
+    ports:
+      - "5000:5000"
     command: ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:5000/"]
@@ -48,9 +53,3 @@ services:
         condition: service_healthy
     ports:
       - "80:80"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-

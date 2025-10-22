@@ -122,49 +122,76 @@ def health_check():
 # ----------------------------
 @app.route('/dataquest-round-1', methods=['POST'])
 def eval1():
+    print("=== STARTING EVAL1 FUNCTION ===")
     try:
+        print("=== STEP 1: Getting request data ===")
         file_url = request.json['file_url']
+        print(f"file_url: {file_url}")
+        
+        print("=== STEP 2: Loading attempt CSV ===")
         attempt = pd.read_csv(file_url)
-        soln = pd.read_csv("Static/round1Final.csv")
-
-        print(f"[ROUND1] Attempt shape: {attempt.shape}")
-        print(f"[ROUND1] Solution shape: {soln.shape}")
-
-        # shape check
+        print(f"Attempt loaded successfully. Shape: {attempt.shape}")
+        print(f"Attempt columns: {list(attempt.columns)}")
+        print(f"First 3 rows of attempt:\n{attempt.head(3)}")
+        
+        print("=== STEP 3: Loading solution CSV ===")
+        soln = pd.read_csv('/usr/src/eval/Static/round1Final.csv')
+        print(f"Solution loaded successfully. Shape: {soln.shape}")
+        print(f"Solution columns: {list(soln.columns)}")
+        print(f"First 3 rows of solution:\n{soln.head(3)}")
+        
+        print("=== STEP 4: Shape comparison ===")
+        print(f"Attempt shape: {attempt.shape}")
+        print(f"Solution shape: {soln.shape}")
+        
         if attempt.shape != soln.shape:
+            print("=== ERROR: Shape mismatch ===")
             return {
                 'public': {'f1_score': 0.0},
                 'private': {'f1_score': 0.0},
                 'error': 'Shape mismatch'
             }
-
-        # Extract predicted and true labels
+        
+        print("=== STEP 5: Extracting values ===")
         attempt_values = attempt.iloc[:, 1].values
         true_values = soln.iloc[:, 1].values
-
-        # Split public/private data (first 1000 public)
+        print(f"Attempt values sample: {attempt_values[:5]}")
+        print(f"True values sample: {true_values[:5]}")
+        
+        print("=== STEP 6: Creating public/private splits ===")
         public_soln = true_values[:1000]
         public_att = attempt_values[:1000]
         private_soln = true_values[1000:]
         private_att = attempt_values[1000:]
-
-        # Calculate scores (macro F1 only)
+        
+        print(f"Public split - Solution: {len(public_soln)}, Attempt: {len(public_att)}")
+        print(f"Private split - Solution: {len(private_soln)}, Attempt: {len(private_att)}")
+        
+        print("=== STEP 7: Calculating F1 scores ===")
+        from sklearn.metrics import f1_score
         public_f1 = f1_score(public_soln, public_att, average='macro')
         private_f1 = f1_score(private_soln, private_att, average='macro')
-
-        return {
+        
+        print(f"Public F1: {public_f1}")
+        print(f"Private F1: {private_f1}")
+        
+        result = {
             'public': {'f1_score': float(public_f1)},
             'private': {'f1_score': float(private_f1)}
         }
+        print(f"=== FINAL RESULT: {result} ===")
+        return result
 
     except Exception as e:
-        print(f"[ERROR ROUND1] {e}")
+        print(f"=== EXCEPTION OCCURRED: {str(e)} ===")
+        import traceback
+        print(f"=== FULL TRACEBACK: ===")
+        traceback.print_exc()
         return {
             'public': {'f1_score': 0.0},
             'private': {'f1_score': 0.0},
             'error': str(e)
         }
-
 
 
 @app.route('/te-be-round-2', methods=['POST'])
