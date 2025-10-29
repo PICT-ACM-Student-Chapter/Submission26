@@ -66,37 +66,75 @@ const signInUser=async (req, res) => {
     }
 };
 
-const GetUserEvent=async(req,res)=>{
+const GetUserEvent = async (req, res) => {
     try {
-        const userId=req.user.id;
-        if(!userId){
-            res.status(400).json({message:"user not found !!"})
-        }
-        const query=`SELECT 
-    e.id AS event_id,
-    e.logo,
-    se.event_name,
-    se.event_route,
-    se.event_status
-FROM 
-    user_events ue
-JOIN 
-    event e ON ue.fk_event = e.id
-JOIN 
-    submission_event se ON se.event_id = e.id
-WHERE 
-    ue.fk_user = $1;  -- Replace $1 with the user_id parameter
-`
-    const params=[userId];
-    const result=await client.query(query,params);
-    if(result.rowCount==0){
-        res.status(500).json({message:"not registered to any event !!"});
-    }
-    return res.status(200).json(result.rows);
-    } catch (error) {
+        const userId = req.user.id;
         
+        if (!userId) {
+            return res.status(400).json({ message: "user not found !!" });
+        }
+
+        // First, try to get events from local database
+        const query = `SELECT 
+            e.id AS event_id,
+            e.logo,
+            se.event_name,
+            se.event_route,
+            se.event_status
+        FROM 
+            user_events ue
+        JOIN 
+            event e ON ue.fk_event = e.id
+        JOIN 
+            submission_event se ON se.event_id = e.id
+        WHERE 
+            ue.fk_user = $1`;
+        
+        const params = [userId];
+        const result = await client.query(query, params);
+        
+        if (result.rowCount === 0) {
+            // If no events in local DB, fetch from EMS and sync
+            try {
+                // Get the ems_token from user_token table
+                const tokenResult = await client.query(
+                    'SELECT ems_token FROM user_token WHERE fk_user = $1 AND is_valid = true ORDER BY created_at DESC LIMIT 1',
+                    [userId]
+                );
+                
+                if (tokenResult.rowCount > 0) {
+                    const ems_token = tokenResult.rows[0].ems_token;
+                    
+                    // Sync events from EMS
+                    await FetchUserSubmissionEvents(ems_token, userId);
+                    
+                    // Try querying again after sync
+                    const retryResult = await client.query(query, params);
+                    
+                    if (retryResult.rowCount > 0) {
+                        return res.status(200).json(retryResult.rows);
+                    }
+                }
+                
+                return res.status(200).json({ message: "not registered to any event !!" });
+            } catch (syncError) {
+                console.error("Error syncing events:", syncError);
+                return res.status(200).json({ message: "not registered to any event !!" });
+            }
+        }
+        
+        return res.status(200).json(result.rows);
+        
+    } catch (error) {
+        console.error("Error in GetUserEvent:", error);
+        return res.status(500).json({ 
+            message: "Internal server error",
+            error: error.message 
+        });
     }
-}
+};
+
+
 const signoutUser= async (req, res) => {    
     const options = {
         method: "POST",

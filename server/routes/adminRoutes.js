@@ -11,7 +11,7 @@ const {
 } = require("../controllers/adminControllers");
 const {isAdminAuthenticated} = require("../middleware/adminMiddlewares");
 
-AdminRouter.post("/signup", signUpAdmin);
+// AdminRouter.post("/signup", signUpAdmin);
 AdminRouter.post("/signin",signInAdmin);
 AdminRouter.get("/me",isAdminAuthenticated,getAdmin);
 AdminRouter.post("/signout",isAdminAuthenticated,logOutAdmin);
@@ -29,3 +29,4 @@ AdminRouter.get("/csv/:event",getcsv);
 
 
 module.exports=AdminRouter;   
+

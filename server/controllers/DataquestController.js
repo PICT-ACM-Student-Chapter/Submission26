@@ -66,12 +66,30 @@ const PostDataQuest=async (req, res) => {
   const { submission_python } = req.body;
   const date = new Date();
   const currDate = date.toDateString();
+  const { emsIds } = require("../models/master");
+  const dataquest_event_id = emsIds.dataquest;
+  
   try {
+    // Check if user is registered for DataQuest event
+    const registrationCheck = await client.query(
+      "SELECT * FROM user_events WHERE fk_user=$1 AND fk_event=$2",
+      [req.user.id, dataquest_event_id]
+    );
+    
+//    if (registrationCheck.rowCount === 0) {
+//      return res.status(403).send({
+//        error: "You must register for the DataQuest event before submitting",
+//      });
+//    }
+
     const query = `select * from dataquest where fk_user = $1 and Date(created_at) = $2`;
     const result = await client.query(query, [req.user.id, currDate]);
-    if (result.rowCount >=3) {
+    const submissionsToday = result.rowCount;
+    const maxSubmissions = 5;
+
+    if (submissionsToday >= maxSubmissions) {
       return res.status(400).send({
-        error: "You have reached maximum submission limit for today.",
+        error: `You have reached the maximum submission limit for today (${submissionsToday}/${maxSubmissions} submissions used).`,
       });
     }
            
@@ -93,13 +111,21 @@ const PostDataQuest=async (req, res) => {
     // };   
     
 
+    console.log("Making request to evaluation server:", options);
     const accData = await axios(options);
-   // console.log("error")
-    //console.log(accData);
+    console.log("Evaluation server full response:", JSON.stringify(accData.data, null, 2));
+    
+    // Check if the response has the expected structure
+    if (!accData.data || !accData.data.private || !accData.data.public || 
+        accData.data.private.f1_score === undefined || accData.data.public.f1_score === undefined) {
+      console.log("ERROR: Unexpected response structure from evaluation server");
+      const errorMsg = accData.data?.error || "Invalid evaluation server response structure";
+      throw new Error(errorMsg);
+    }
+    
     const private_accuracy = accData.data.private.f1_score;
     const public_accuracy = accData.data.public.f1_score;
-    console.log(private_accuracy);
-    console.log(public_accuracy);     
+    console.log("Parsed scores - Private:", private_accuracy, "Public:", public_accuracy);
     const response = await client.query(
       "INSERT INTO dataquest(fk_user, submission_csv, submission_python, private_accuracy, public_accuracy, active_submission, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, fk_user, submission_csv, submission_python, public_accuracy, created_at, updated_at",
       [
@@ -117,9 +143,18 @@ const PostDataQuest=async (req, res) => {
       submission: response.rows[0],
     });
   } catch (error) {
-    console.log(error);
+    console.log("=== DATAQUEST ERROR ===");
+    console.log("Error type:", error.name);
+    console.log("Error message:", error.message);
+    if (error.response) {
+      console.log("Error response status:", error.response.status);
+      console.log("Error response data:", error.response.data);
+    }
+    console.log("Full error:", error);
+    console.log("=== END DATAQUEST ERROR ===");
+    
     res.status(500).send({
-      error: "Internal Server error",
+      error: "Internal Server error: " + error.message,
     });
   }
 };
@@ -197,5 +232,44 @@ const getLeaderBoard = async (req, res) => {
 };
 
 
-module.exports={PostDataQuest,GetDataQuest,getLeaderBoard};
-  
+const GetAllDataQuestSubmissions = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        users.first_name, 
+        users.last_name, 
+        users.email,
+        users.year,
+        dataquest.id,
+        dataquest.submission_csv,
+        dataquest.submission_python,
+        dataquest.public_accuracy,
+        dataquest.private_accuracy,
+        dataquest.created_at,
+        dataquest.updated_at
+      FROM dataquest
+      JOIN users ON dataquest.fk_user = users.id
+      ORDER BY dataquest.created_at DESC
+    `;
+    
+    const response = await client.query(query);
+    
+    if (response.rowCount === 0) {
+      return res.status(200).send({
+        submissions: [],
+        message: "No submissions found"
+      });
+    }
+    
+    res.send({
+      submissions: response.rows,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      error: "Internal Server error",
+    });
+  }
+};
+
+module.exports={PostDataQuest,GetDataQuest,getLeaderBoard,GetAllDataQuestSubmissions};
