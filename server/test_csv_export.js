@@ -89,7 +89,7 @@ async function runTests() {
     const express = require("express");
     const testApp = express();
     testApp.use(express.json());
-    testApp.use("/admin", require("./Routes/adminRoutes"));
+    testApp.use("/admin", require("./Routes/AdminRoutes"));
     testApp.use("/freeze", require("./Routes/FreezeRoutes"));
     testApp.use("/hacknova", require("./Routes/HackNovaRoutes"));
     testApp.use("/innowave", require("./Routes/InnowaveRoutes"));

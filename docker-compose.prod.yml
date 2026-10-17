@@ -3,6 +3,7 @@ version: "3.9"
 services:
   server:
     container_name: server
+    restart: always
     build:
       context: ./server
       dockerfile: Dockerfile.prod
@@ -12,6 +13,12 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: ${DATABASE_URL}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DATABASE_SSL: ${DATABASE_SSL:-false}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}

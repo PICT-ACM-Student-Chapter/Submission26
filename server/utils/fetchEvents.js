@@ -1,8 +1,11 @@
 const { default: axios } = require("axios");
+const https = require("https");
 const client = require("../db/connect");
 const { masterEvents } = require("../models/master");
 const format = require("pg-format");
 const { getSubmissionEvents } = require("../controllers/SubmissionEventController");
+
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 const setArr = (ems_events, submission_events, ems_id, userId, finalArr) => {
   const ems_event = ems_events?.find((event) => event.id === ems_id);
@@ -131,6 +134,7 @@ async function FetchUserSubmissionEvents(ems_token, userId) {
   const options = {
     method: "GET",
     url: `${EMS_API}/user_events`,
+    httpsAgent,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${ems_token}`,

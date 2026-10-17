@@ -1,9 +1,10 @@
-const axios=require("axios"); 
+const axios = require("axios"); 
+const https = require("https");
 const client = require("../db/connect");
 const {generateUserToken} = require("../utils/generateUserTokens");
 const {FetchUserSubmissionEvents}= require("../utils/fetchEvents");
 
-
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 const EMS_API = process.env.EMS_API || "https://api.pulzion.pictacm.in";
 
 const signInUser=async (req, res) => {
@@ -12,6 +13,7 @@ const signInUser=async (req, res) => {
     const options = {
         method: "POST",
         url: `${EMS_API}/user/app/signin`,
+        httpsAgent,
         headers: {
             "Content-Type": "application/json",
         },
@@ -140,6 +142,7 @@ const signoutUser= async (req, res) => {
     const options = {
         method: "POST",
         url: `${EMS_API}/user/app/signout`,
+        httpsAgent,
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${req.ems_token}`,

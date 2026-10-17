@@ -1,6 +1,37 @@
 const client = require("./connect");
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios");
+const https = require("https");
+
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
+async function fetchEventsFromEMS() {
+  const baseUrl = process.env.EMS_API || "https://65.1.36.0";
+  console.log(`📡 Fetching events catalog from ${baseUrl}/events...`);
+  try {
+    const listRes = await axios.get(`${baseUrl}/events`, { httpsAgent, timeout: 10000 });
+    const eventList = listRes.data?.events || [];
+    console.log(`   Found ${eventList.length} events from EMS. Fetching detailed event data from ${baseUrl}/events/:eventid...`);
+
+    const detailedEvents = [];
+    for (const item of eventList) {
+      try {
+        const detailRes = await axios.get(`${baseUrl}/events/${item.id}`, { httpsAgent, timeout: 6000 });
+        const ev = detailRes.data?.events || item;
+        detailedEvents.push(ev);
+        console.log(`   ✓ Fetched details for [${ev.id}] ${ev.name}`);
+      } catch (err) {
+        console.warn(`   ⚠️ Could not fetch individual details for event ${item.id}, using list item: ${err.message}`);
+        detailedEvents.push(item);
+      }
+    }
+    return detailedEvents;
+  } catch (err) {
+    console.warn(`⚠️ EMS fetch error (${err.message}). Using local fallback event list.`);
+    return eventsJson;
+  }
+}
 
 const eventsJson = [
   {
@@ -206,9 +237,10 @@ async function initializeDatabase() {
         is_active BOOLEAN NOT NULL DEFAULT true,
         play BOOLEAN NOT NULL DEFAULT true,
         price INT NOT NULL DEFAULT 0,
-        link VARCHAR(255),
-        tagline VARCHAR(255) NOT NULL DEFAULT '',
-        logo VARCHAR(255) NOT NULL DEFAULT '',
+        link VARCHAR(2048),
+        whatsapp_link VARCHAR(2048),
+        tagline VARCHAR(2048) NOT NULL DEFAULT '',
+        logo VARCHAR(2048) NOT NULL DEFAULT '',
         rules TEXT NOT NULL DEFAULT '',
         rounds TEXT NOT NULL DEFAULT '',
         teams TEXT NOT NULL DEFAULT '',
@@ -243,6 +275,7 @@ async function initializeDatabase() {
         description TEXT,
         active_submission BOOLEAN NOT NULL DEFAULT true,
         fk_user INT,
+        ems_user_id INT,
         CONSTRAINT fk_user FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -257,6 +290,7 @@ async function initializeDatabase() {
         changelog TEXT,
         active_submission BOOLEAN NOT NULL DEFAULT true,
         fk_user INT,
+        ems_user_id INT,
         CONSTRAINT fk_user FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -267,11 +301,14 @@ async function initializeDatabase() {
         team_name VARCHAR(255),
         project_title VARCHAR(255),
         submission_file_url VARCHAR(2048),
+        presentation_url VARCHAR(2048),
+        project_zip_url VARCHAR(2048),
         github_url VARCHAR(2048),
         live_demo_url VARCHAR(2048),
         notes TEXT,
         active_submission BOOLEAN NOT NULL DEFAULT true,
         fk_user INT,
+        ems_user_id INT,
         CONSTRAINT fk_user_hacknova FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -282,9 +319,11 @@ async function initializeDatabase() {
         team_name VARCHAR(255),
         submission_file_url VARCHAR(2048),
         github_pr_url VARCHAR(2048),
+        github_repo_url VARCHAR(2048),
         notes TEXT,
         active_submission BOOLEAN NOT NULL DEFAULT true,
         fk_user INT,
+        ems_user_id INT,
         CONSTRAINT fk_user_rootcause FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -310,22 +349,54 @@ async function initializeDatabase() {
     `);
     console.log("✓ All base and event tables created.");
 
-    // 3. Upsert Events
-    for (const ev of eventsJson) {
+    // 3. Upsert Events (dynamically fetched from EMS /events and /events/:id)
+    const eventsToInsert = await fetchEventsFromEMS();
+    for (const ev of eventsToInsert) {
       await client.query(`
-        INSERT INTO event (id, name, description, type, mode, is_active, play, price, tagline, logo, rules, rounds, teams, notes, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
+        INSERT INTO event (
+          id, name, description, type, mode, is_active, play, price, link, whatsapp_link,
+          tagline, logo, rules, rounds, teams, notes, created_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           description = EXCLUDED.description,
           type = EXCLUDED.type,
           mode = EXCLUDED.mode,
+          is_active = EXCLUDED.is_active,
+          play = EXCLUDED.play,
           price = EXCLUDED.price,
+          link = EXCLUDED.link,
+          whatsapp_link = EXCLUDED.whatsapp_link,
           tagline = EXCLUDED.tagline,
-          logo = EXCLUDED.logo;
-      `, [ev.id, ev.name, ev.description, ev.type, ev.mode, ev.is_active, ev.play, ev.price, ev.tagline, ev.logo, ev.rules, ev.rounds, ev.teams, ev.notes]);
+          logo = EXCLUDED.logo,
+          rules = EXCLUDED.rules,
+          rounds = EXCLUDED.rounds,
+          teams = EXCLUDED.teams,
+          notes = EXCLUDED.notes,
+          updated_at = EXCLUDED.updated_at;
+      `, [
+        ev.id,
+        ev.name || '',
+        ev.description || '',
+        ev.type || null,
+        ev.mode || null,
+        ev.is_active !== undefined ? ev.is_active : true,
+        ev.play !== undefined ? ev.play : true,
+        typeof ev.price === 'number' ? ev.price : (parseInt(ev.price, 10) || 0),
+        ev.link || null,
+        ev.whatsapp_link || null,
+        ev.tagline || '',
+        ev.logo || '',
+        ev.rules || '',
+        ev.rounds || '',
+        ev.teams || '',
+        ev.notes || '',
+        ev.created_at ? new Date(ev.created_at) : new Date(),
+        ev.updated_at ? new Date(ev.updated_at) : new Date(),
+      ]);
     }
-    console.log("✓ Events catalog populated.");
+    console.log(`✓ Events catalog populated with ${eventsToInsert.length} events.`);
 
     // 4. Seed Submission Portals for 4 Target Events
     await client.query(`

@@ -18,7 +18,7 @@ console.log(`EMS_API: ${process.env.EMS_API || "https://api.pulzion.pictacm.in"}
 // ==========================================
 // Core & Active Event Routers
 // ==========================================
-const AdminRouter = require("./Routes/adminRoutes");
+const AdminRouter = require("./Routes/AdminRoutes");
 const UserRouter = require("./Routes/UserRoutes");
 const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
 const alleventRouter = require("./Routes/AlleventRoutes");
@@ -50,16 +50,29 @@ pool.query("SELECT NOW()", (err, res) => {
     console.error("Error connecting to PostgreSQL DB:", err);
   } else {
     console.log("Connected to PostgreSQL DB at:", res.rows[0].now);
-    // Ensure event columns exist
+    // Ensure event columns exist for all 4 active competitions
     pool.query(`
-      ALTER TABLE rootcause ADD COLUMN IF NOT EXISTS github_repo_url VARCHAR(2048);
+      ALTER TABLE freeze_submission ADD COLUMN IF NOT EXISTS ems_user_id INT;
+      ALTER TABLE freeze_submission ADD COLUMN IF NOT EXISTS photo_title VARCHAR(255);
+      ALTER TABLE freeze_submission ADD COLUMN IF NOT EXISTS camera_device VARCHAR(255);
+      ALTER TABLE freeze_submission ADD COLUMN IF NOT EXISTS description TEXT;
+
+      ALTER TABLE innowave ADD COLUMN IF NOT EXISTS ems_user_id INT;
+      ALTER TABLE innowave ADD COLUMN IF NOT EXISTS video_pitch_url VARCHAR(2048);
+      ALTER TABLE innowave ADD COLUMN IF NOT EXISTS team_name VARCHAR(255);
+      ALTER TABLE innowave ADD COLUMN IF NOT EXISTS changelog TEXT;
+
+      ALTER TABLE hacknova ADD COLUMN IF NOT EXISTS ems_user_id INT;
       ALTER TABLE hacknova ADD COLUMN IF NOT EXISTS presentation_url VARCHAR(2048);
       ALTER TABLE hacknova ADD COLUMN IF NOT EXISTS project_zip_url VARCHAR(2048);
+
+      ALTER TABLE rootcause ADD COLUMN IF NOT EXISTS ems_user_id INT;
+      ALTER TABLE rootcause ADD COLUMN IF NOT EXISTS github_repo_url VARCHAR(2048);
     `, (migErr) => {
       if (migErr) {
         console.warn("Schema check warning:", migErr.message);
       } else {
-        console.log("✓ Event schema columns up-to-date (Root Cause & HackNova).");
+        console.log("✓ Event schema columns up-to-date for all 4 competitions (Freeze, Innowave, HackNova, Root Cause).");
       }
     });
   }

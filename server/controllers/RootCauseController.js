@@ -32,7 +32,7 @@ const postRootCause = async (req, res) => {
     const github_repo_url = req.body.github_repo_url || req.body.repo_url || req.body.fork_url || req.body.github_link || "";
     const github_pr_url = req.body.github_pr_url || req.body.pr_url || req.body.branch_url || req.body.branch_or_pr_url || "";
     const { team_name, notes } = req.body;
-    const submission_file_url = req.file ? req.file.location : (req.body.submission_file_url || null);
+    const submission_file_url = req.file ? req.file.location : (req.body.submission_file_url || req.body.submission || null);
 
     if (!github_repo_url && !github_pr_url && !submission_file_url) {
       return res.status(400).json({
@@ -92,6 +92,7 @@ const getRootCause = async (req, res) => {
     return res.status(200).json({
       submission: {
         ...response.rows[0],
+        submission: response.rows[0].submission_file_url || response.rows[0].github_pr_url || response.rows[0].github_repo_url,
         ems_user_id: response.rows[0].ems_user_id || req.user.ems_id,
       },
     });

@@ -1,6 +1,10 @@
 const { Client } = require("pg");
+const fs = require("fs");
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, ".env.dev") });
+const envPath = fs.existsSync(path.join(__dirname, ".env"))
+  ? path.join(__dirname, ".env")
+  : path.join(__dirname, ".env.dev");
+require("dotenv").config({ path: envPath });
 const { parse } = require("pg-connection-string");
 
 async function checkDatabase() {
@@ -8,21 +12,31 @@ async function checkDatabase() {
   console.log("🔍 PULZION '26 EC2 POSTGRESQL VERIFICATION");
   console.log("==================================================");
 
-  const parsed = parse(process.env.DATABASE_URL);
+  let parsed = {};
+  if (process.env.DATABASE_URL) {
+    try {
+      parsed = parse(process.env.DATABASE_URL);
+    } catch (_) {}
+  }
   
-  // For running directly on the Mac host, if host is host.docker.internal, map to 127.0.0.1
-  const testHost = parsed.host === "host.docker.internal" ? "127.0.0.1" : parsed.host;
-  const testPort = parsed.port || 5433;
+  const testHost = process.env.DB_HOST || (parsed.host === "host.docker.internal" ? "127.0.0.1" : parsed.host) || "127.0.0.1";
+  const testPort = parseInt(process.env.DB_PORT || parsed.port || 5433, 10);
+  const testUser = process.env.DB_USER || parsed.user || "postgres";
+  const testPassword = process.env.DB_PASSWORD || parsed.password;
+  const testDatabase = process.env.DB_NAME || parsed.database || "PulzionSubmission";
+  const isSSL =
+    process.env.DATABASE_URL?.includes("sslmode=require") ||
+    process.env.DATABASE_SSL === "true";
 
-  console.log(`Connecting to host: ${testHost}:${testPort}, database: ${parsed.database}, user: ${parsed.user}`);
+  console.log(`Connecting to host: ${testHost}:${testPort}, database: ${testDatabase}, user: ${testUser}`);
 
   const client = new Client({
     host: testHost,
     port: testPort,
-    user: parsed.user,
-    password: parsed.password,
-    database: parsed.database,
-    ssl: process.env.DATABASE_URL.includes("sslmode=require") ? { rejectUnauthorized: false } : false,
+    user: testUser,
+    password: testPassword,
+    database: testDatabase,
+    ssl: isSSL ? { rejectUnauthorized: false } : false,
     connectionTimeoutMillis: 5000,
   });
 
