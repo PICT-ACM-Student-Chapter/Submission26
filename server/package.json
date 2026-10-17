@@ -5,7 +5,9 @@
   "scripts": {
     "start": "node --dns-result-order=ipv4first app.js",
     "dev": "nodemon --dns-result-order=ipv4first app.js",
-    "create-admin": "node --dns-result-order=ipv4first create_admin.js"
+    "create-admin": "node --dns-result-order=ipv4first create_admin.js",
+    "test-db": "node test_ec2_connection.js",
+    "init-db": "node db/init_full_schema.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.913.0",

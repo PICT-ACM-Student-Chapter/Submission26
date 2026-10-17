@@ -18,6 +18,8 @@ services:
       AWS_REGION: ${AWS_REGION}
       EMS_API: ${EMS_API}
       TOKEN_SECRET: ${TOKEN_SECRET}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3001:3001"
     networks:

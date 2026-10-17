@@ -15,9 +15,11 @@ services:
       - tmp_vol:/tmp
     env_file:
       - ./server/.env.dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: >
       sh -c "npm install && NODE_ENV=dev npm run dev"
-    # Using Neon DB cloud serverless database
+    # Using PostgreSQL database
 
 volumes:
   run_vol:

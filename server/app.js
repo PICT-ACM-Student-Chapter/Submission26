@@ -47,9 +47,9 @@ const pool = require("./db/connect"); // Import the pool from connect.js
 // ---------------------------
 pool.query("SELECT NOW()", (err, res) => {
   if (err) {
-    console.error("Error connecting to Neon DB:", err);
+    console.error("Error connecting to PostgreSQL DB:", err);
   } else {
-    console.log("Connected to Neon DB at:", res.rows[0].now);
+    console.log("Connected to PostgreSQL DB at:", res.rows[0].now);
     // Ensure event columns exist
     pool.query(`
       ALTER TABLE rootcause ADD COLUMN IF NOT EXISTS github_repo_url VARCHAR(2048);
