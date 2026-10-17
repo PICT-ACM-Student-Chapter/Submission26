@@ -12,8 +12,9 @@ RUN npm install --production
 # Copy all source files
 COPY . .
 
-# Expose your backend port
-EXPOSE 3000
+# Expose backend port
+ENV PORT=3001
+EXPOSE 3001
 
 # Start the app
 CMD ["npm", "start"]
