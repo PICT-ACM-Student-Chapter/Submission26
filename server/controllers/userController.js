@@ -9,7 +9,7 @@ const EMS_API = process.env.EMS_API || "https://api.pulzion.pictacm.in";
 
 const signInUser=async (req, res) => {
     const { email, password } = req.body;
-    console.log(`email : ${email}`); 
+    // console.log(`email : ${email}`); 
     const options = {
         method: "POST",
         url: `${EMS_API}/user/app/signin`,
@@ -39,7 +39,7 @@ const signInUser=async (req, res) => {
             );
         } 
         user = response.rows[0]
-        console.log(user);
+        // console.log(user);
         const userId = user.id;
         const token = await generateUserToken(userId, ems_token);
 
