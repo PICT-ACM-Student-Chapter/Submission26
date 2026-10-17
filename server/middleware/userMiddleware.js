@@ -12,7 +12,7 @@ const isUserAuthenticated = async (req, res, next) => {
         const userId = data.rows[0].fk_user;
         const ems_token = data.rows[0].ems_token
         query =
-            "SELECT id, first_name, last_name, email, mobile_number, college, created_at, updated_at, year from users where id = $1";
+            "SELECT id, first_name, last_name, email, mobile_number, college, created_at, updated_at, year, ems_id from users where id = $1";
         params = [userId];
         const result = await client.query(query, params);
         if (result.rowCount < 1) {

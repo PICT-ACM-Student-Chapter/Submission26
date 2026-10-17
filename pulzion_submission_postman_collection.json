@@ -1,0 +1,663 @@
+{
+  "info": {
+    "name": "Pulzion 2026 - Submission Backend API",
+    "description": "Complete collection for testing the 4 Pulzion submission events (Freeze The Second, Innowave, HackNova, Root Cause) with AWS S3 uploads and Neon DB.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        }
+      }
+    },
+    {
+      "name": "1. Auth & User Profile",
+      "item": [
+        {
+          "name": "Sign In (Saves Token Automatically)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    console.log('JWT Token set successfully!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test_participant@pulzion.co.in\",\n  \"password\": \"<user_password>\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/signin",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "signin"]
+            }
+          }
+        },
+        {
+          "name": "Get User Profile (/user/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get User Registered Events (/user/user_events)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/user_events",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "user_events"]
+            }
+          }
+        },
+        {
+          "name": "Sign Out (/user/signout)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/signout",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "signout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Freeze The Second (EMS 10)",
+      "item": [
+        {
+          "name": "Upload Photo File to AWS S3 (multipart/form-data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "photo_title",
+                  "value": "Campus Architecture at Sunset",
+                  "type": "text"
+                },
+                {
+                  "key": "camera_device",
+                  "value": "Sony A7 IV - 35mm f/1.8",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Natural light capture emphasizing symmetrical reflections",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/freeze/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["freeze", "post"]
+            }
+          }
+        },
+        {
+          "name": "Submit Photo via Direct URL (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"submission\": \"https://images.unsplash.com/photo-1518791841217-8f162f1e1131\",\n  \"photo_title\": \"Serenity\",\n  \"camera_device\": \"iPhone 15 Pro\",\n  \"description\": \"Monochrome shot\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/freeze/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["freeze", "post"]
+            }
+          }
+        },
+        {
+          "name": "View My Photo Submission",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/freeze/get",
+              "host": ["{{baseUrl}}"],
+              "path": ["freeze", "get"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Innowave (EMS 12)",
+      "item": [
+        {
+          "name": "Upload Round 1 Deck (PDF/PPT to AWS S3)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "deck_file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "track",
+                  "value": "Future Tech",
+                  "type": "text"
+                },
+                {
+                  "key": "video_pitch_url",
+                  "value": "https://youtu.be/pitch_demo_video",
+                  "type": "text"
+                },
+                {
+                  "key": "team_name",
+                  "value": "Quantum Innovators",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/innowave/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["innowave", "post"]
+            }
+          }
+        },
+        {
+          "name": "Submit Round 1 via Drive URL (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"submission\": \"https://drive.google.com/file/d/innowave_deck.pdf\",\n  \"track\": \"Industry & Enterprise\",\n  \"video_pitch_url\": \"https://youtu.be/pitch_demo\",\n  \"team_name\": \"Apex Labs\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/innowave/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["innowave", "post"]
+            }
+          }
+        },
+        {
+          "name": "Submit Round 2 Changelog",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"changelog\": \"Based on mentor critique at Station 3, we eliminated hardware dependencies and focused purely on an edge-compute software model.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/innowave/changelog",
+              "host": ["{{baseUrl}}"],
+              "path": ["innowave", "changelog"]
+            }
+          }
+        },
+        {
+          "name": "View My Innowave Submission",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/innowave/get",
+              "host": ["{{baseUrl}}"],
+              "path": ["innowave", "get"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. HackNova (EMS 20)",
+      "item": [
+        {
+          "name": "Submit Project Archive / Code (form-data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "project_file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "project_title",
+                  "value": "Autonomous Campus Navigation System",
+                  "type": "text"
+                },
+                {
+                  "key": "github_url",
+                  "value": "https://github.com/pict/hacknova-project",
+                  "type": "text"
+                },
+                {
+                  "key": "live_demo_url",
+                  "value": "https://hacknova-bot.vercel.app",
+                  "type": "text"
+                },
+                {
+                  "key": "team_name",
+                  "value": "CyberSquad",
+                  "type": "text"
+                },
+                {
+                  "key": "notes",
+                  "value": "Full stack prototype with React, ROS2, and Express",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/hacknova/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["hacknova", "post"]
+            }
+          }
+        },
+        {
+          "name": "Submit Project via GitHub & Live URL (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_title\": \"Smart Campus Energy Monitor\",\n  \"github_url\": \"https://github.com/myteam/energy-monitor\",\n  \"live_demo_url\": \"https://energy-monitor.vercel.app\",\n  \"team_name\": \"EcoTech\",\n  \"notes\": \"IoT simulation with real-time dashboard\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/hacknova/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["hacknova", "post"]
+            }
+          }
+        },
+        {
+          "name": "View My HackNova Submission",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/hacknova/get",
+              "host": ["{{baseUrl}}"],
+              "path": ["hacknova", "get"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Root Cause (EMS 21)",
+      "item": [
+        {
+          "name": "Submit Bug Fix PR & Patch File (form-data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "patch_file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "github_pr_url",
+                  "value": "https://github.com/pict-oss/bugathon/pull/42",
+                  "type": "text"
+                },
+                {
+                  "key": "team_name",
+                  "value": "DebugMasters",
+                  "type": "text"
+                },
+                {
+                  "key": "notes",
+                  "value": "Identified and fixed race condition during thread pool worker shutdown.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rootcause/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["rootcause", "post"]
+            }
+          }
+        },
+        {
+          "name": "Submit Bug Fix via GitHub PR Link (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"github_pr_url\": \"https://github.com/pict-oss/bugathon/pull/101\",\n  \"team_name\": \"BugHunters\",\n  \"notes\": \"Patched null pointer exception in auth token parser.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rootcause/post",
+              "host": ["{{baseUrl}}"],
+              "path": ["rootcause", "post"]
+            }
+          }
+        },
+        {
+          "name": "View My Root Cause Submission",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rootcause/get",
+              "host": ["{{baseUrl}}"],
+              "path": ["rootcause", "get"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Portal Status & Management",
+      "item": [
+        {
+          "name": "Check If Freeze Portal Is Open",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/submission/freeze",
+              "host": ["{{baseUrl}}"],
+              "path": ["submission", "freeze"]
+            }
+          }
+        },
+        {
+          "name": "Check If Innowave Portal Is Open",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/submission/innowave",
+              "host": ["{{baseUrl}}"],
+              "path": ["submission", "innowave"]
+            }
+          }
+        },
+        {
+          "name": "Check If HackNova Portal Is Open",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/submission/hacknova",
+              "host": ["{{baseUrl}}"],
+              "path": ["submission", "hacknova"]
+            }
+          }
+        },
+        {
+          "name": "Check If Root Cause Portal Is Open",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/submission/rootcause",
+              "host": ["{{baseUrl}}"],
+              "path": ["submission", "rootcause"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Admin & CSV Exports",
+      "item": [
+        {
+          "name": "Admin Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('adminToken', jsonData.token);",
+                  "    console.log('Admin Token set successfully!');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"submissionbackend\",\n  \"password\": \"<admin_password>\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/signin",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "signin"]
+            }
+          }
+        },
+        {
+          "name": "Download Freeze Submissions CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/csv/freeze_submission",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "csv", "freeze_submission"]
+            }
+          }
+        },
+        {
+          "name": "Download Innowave Submissions CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/csv/innowave",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "csv", "innowave"]
+            }
+          }
+        },
+        {
+          "name": "Download HackNova Submissions CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/csv/hacknova",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "csv", "hacknova"]
+            }
+          }
+        },
+        {
+          "name": "Download Root Cause Submissions CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/csv/rootcause",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "csv", "rootcause"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

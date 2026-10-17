@@ -127,9 +127,10 @@ const setArr = (ems_events, submission_events, ems_id, userId, finalArr) => {
 
 
 async function FetchUserSubmissionEvents(ems_token, userId) {
+  const EMS_API = process.env.EMS_API || "https://api.pulzion.pictacm.in";
   const options = {
     method: "GET",
-    url: `${process.env.EMS_API}/user_events`,
+    url: `${EMS_API}/user_events`,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${ems_token}`,
@@ -139,7 +140,7 @@ async function FetchUserSubmissionEvents(ems_token, userId) {
   try {
     // Fetching events from EMS
     const response = await axios(options);
-    let ems_events = response.data.events;
+    let ems_events = response?.data?.events || [];
     // Fetching submission events (from another service or DB)
     const submission_events = await getSubmissionEvents();
 

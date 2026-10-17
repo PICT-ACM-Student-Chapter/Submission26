@@ -17,17 +17,7 @@ services:
       - ./server/.env.dev
     command: >
       sh -c "npm install && NODE_ENV=dev npm run dev"
-    # No database dependencies needed - using Neon DB
-
-  evaluation: 
-    container_name: evaluation
-    image: evaluation
-    build:
-      context: ./dataquest-evaluation-server
-    ports:
-      - "5000:5000"
-    command: >
-      sh -c "python3 -m venv venv && gunicorn --bind 0.0.0.0:5000 wsgi:app"
+    # Using Neon DB cloud serverless database
 
 volumes:
   run_vol:
@@ -42,4 +32,3 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-      

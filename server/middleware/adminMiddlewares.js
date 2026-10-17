@@ -3,8 +3,15 @@ const client = require("../db/connect");
 
 exports.isAdminAuthenticated = async (req, res, next) => {
     try {
+        const authHeader = req.header("Authorization");
+        const token = (authHeader ? authHeader.replace("Bearer ", "") : null) 
+                   || req.query.token 
+                   || req.query.admin_token;
+        
+        if (!token) {
+            return res.status(401).json({ error: "Unauthorized Admin! Token is required." });
+        }
         let query = `select * from admin_token where token = $1`
-        const token = req.header("Authorization").replace("Bearer ", "");
         let params = [token]
         const data = await client.query(query, params);
         if (data.rowCount < 1) {

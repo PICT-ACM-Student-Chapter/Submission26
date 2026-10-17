@@ -188,3 +188,61 @@ CREATE TABLE admin_token (
 	fk_admin INT,
 	CONSTRAINT fk_admin FOREIGN KEY(fk_admin) REFERENCES Admin(id) ON DELETE CASCADE
 );
+
+-- ========================================================
+-- New Events Tables (HackNova & Root Cause)
+-- ========================================================
+
+CREATE TABLE IF NOT EXISTS hacknova (
+	id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
+	team_name VARCHAR(255),
+	project_title VARCHAR(255),
+	submission_file_url VARCHAR(2048),
+	github_url VARCHAR(2048),
+	live_demo_url VARCHAR(2048),
+	notes TEXT,
+	active_submission BOOLEAN NOT NULL DEFAULT true,
+	fk_user INT,
+	CONSTRAINT fk_user_hacknova FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
+	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS rootcause (
+	id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
+	team_name VARCHAR(255),
+	submission_file_url VARCHAR(2048),
+	github_pr_url VARCHAR(2048),
+	notes TEXT,
+	active_submission BOOLEAN NOT NULL DEFAULT true,
+	fk_user INT,
+	CONSTRAINT fk_user_rootcause FOREIGN KEY(fk_user) REFERENCES users(id) ON DELETE CASCADE,
+	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Add S3 metadata columns to Freeze the Second if not present
+ALTER TABLE freeze_submission 
+	ADD COLUMN IF NOT EXISTS photo_title VARCHAR(255),
+	ADD COLUMN IF NOT EXISTS camera_device VARCHAR(255),
+	ADD COLUMN IF NOT EXISTS description TEXT;
+
+-- Add video and team columns to InnoWave if not present
+ALTER TABLE InnoWave 
+	ADD COLUMN IF NOT EXISTS video_pitch_url VARCHAR(2048),
+	ADD COLUMN IF NOT EXISTS team_name VARCHAR(255),
+	ADD COLUMN IF NOT EXISTS changelog TEXT;
+
+-- Seed submission portals for the 4 active events
+INSERT INTO submission_event (event_id, event_name, event_route, event_status)
+VALUES 
+    (20, 'HACKNOVA', '/hacknova', true),
+    (10, 'FREEZE THE SECOND', '/freeze', true),
+    (12, 'INNOWAVE', '/innowave', true),
+    (21, 'ROOT CAUSE', '/rootcause', true)
+ON CONFLICT (event_id) 
+DO UPDATE SET 
+    event_name = EXCLUDED.event_name,
+    event_route = EXCLUDED.event_route,
+    event_status = EXCLUDED.event_status;
+

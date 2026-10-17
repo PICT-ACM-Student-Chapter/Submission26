@@ -1,0 +1,1191 @@
+{
+	"info": {
+		"name": "Pulzion-2026-Submission-Backend",
+		"_postman_id": "pulzion-submission-2026-0001",
+		"description": "Comprehensive Postman collection for the Pulzion 2026 Submission Backend.\n\nBase URL: http://localhost:3001\n\nFeatures:\n• User Signin: Delegates to EMS backend (/user/app/signin) & auto-syncs registered events (10, 12, 20, 21)\n• Automatically captures JWT session token to {{token}}\n• S3 File Uploads + Direct URL submissions for Freeze The Second, Innowave, HackNova, Root Cause\n• Innowave Round 2 changelog patch\n• Portal status & Admin CSV export",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3001",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "loginEmail",
+			"value": "test_participant@pulzion.co.in",
+			"type": "string"
+		},
+		{
+			"key": "loginPassword",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminUsername",
+			"value": "submissionbackend",
+			"type": "string"
+		},
+		{
+			"key": "adminPassword",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "0-Health",
+			"item": [
+				{
+					"name": "GET Ping / Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Health 200 pong\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.text()).to.include(\"pong\");",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "1-Auth & Profile",
+			"description": "Sign in with EMS credentials. The script automatically saves {{token}} for all subsequent submission endpoints.",
+			"item": [
+				{
+					"name": "POST User Signin (Auto-Saves {{token}})",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/signin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"signin"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Signin 200 + token received\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var j = pm.response.json();",
+									"    pm.expect(j.token).to.exist;",
+									"    pm.collectionVariables.set(\"token\", j.token);",
+									"    if (j.ems_token) pm.collectionVariables.set(\"ems_token\", j.ems_token);",
+									"    console.log(\"Saved JWT token:\", j.token.substring(0, 15) + \"...\");",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET User Me (Current Profile)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"me"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"User profile 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var j = pm.response.json();",
+									"    pm.expect(j.user).to.exist;",
+									"    pm.expect(j.user.email).to.be.a(\"string\");",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET User Registered Events",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/user_events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"user_events"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Events 200 + array\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var j = pm.response.json();",
+									"    pm.expect(j.events).to.be.an(\"array\");",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE User Signout",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/signout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"signout"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Signout 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "2-Freeze The Second (EMS 10)",
+			"description": "Theme: Photography Contest. Supports AWS S3 file upload (multipart/form-data) or JSON direct photo URL.",
+			"item": [
+				{
+					"name": "POST Freeze Upload Photo to S3 (multipart)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/freeze/post",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"freeze",
+								"post"
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"description": "Select photo file (jpg, png, webp, max 35MB)"
+								},
+								{
+									"key": "photo_title",
+									"value": "Campus Monolith at Golden Hour",
+									"type": "text"
+								},
+								{
+									"key": "camera_device",
+									"value": "Sony A7 IV - 35mm f/1.8",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Natural light capture emphasizing architectural symmetries.",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Photo submission 200 or 400 (already submitted)\", function () {",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST Freeze Submit Photo URL (JSON)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/freeze/post",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"freeze",
+								"post"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"submission\": \"https://images.unsplash.com/photo-1518791841217-8f162f1e1131\",\n  \"photo_title\": \"Monochrome Shadows\",\n  \"camera_device\": \"Fujifilm X-T4\",\n  \"description\": \"Black and white high contrast perspective\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Photo URL submission reachable\", function () {",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Freeze View My Submission",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/freeze/get",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"freeze",
+								"get"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Get Freeze 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Freeze Results (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/freeze/getresult",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"freeze",
+								"getresult"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Admin Freeze results 200 or 401\", function () {",
+									"    pm.expect([200, 401]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "3-Innowave (EMS 12)",
+			"description": "Theme: Ideathon & Pitch Contest. Round 1 PDF/PPT deck upload to S3; Round 2 changelog patch.",
+			"item": [
+				{
+					"name": "POST Innowave Upload Deck to S3 (multipart)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/innowave/post",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"innowave",
+								"post"
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "deck_file",
+									"type": "file",
+									"description": "Select deck file (pdf, ppt, pptx, max 50MB)"
+								},
+								{
+									"key": "track",
+									"value": "Future Tech",
+									"type": "text"
+								},
+								{
+									"key": "team_name",
+									"value": "Innovators2026",
+									"type": "text"
+								},
+								{
+									"key": "video_pitch_url",
+									"value": "https://youtu.be/pitch_demo_sample",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Deck upload 200 or 400\", function () {",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH Innowave Update Round 2 Changelog",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/innowave/changelog",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"innowave",
+								"changelog"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"changelog\": \"Round 2 additions: Added financial unit economics model on slide 7 and prototype Figma wireframes.\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Changelog updated reachable\", function () {",
+									"    pm.expect([200, 400, 404]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Innowave View My Submission",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/innowave/get",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"innowave",
+								"get"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Get Innowave 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Innowave Results (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/innowave/getresult",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"innowave",
+								"getresult"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Admin Innowave results reachable\", function () {",
+									"    pm.expect([200, 401]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "4-HackNova (EMS 20)",
+			"description": "Theme: 24-Hour Hackathon. Submit project code ZIP, GitHub repo URL, and live demo URL.",
+			"item": [
+				{
+					"name": "POST HackNova Submit Project to S3 (multipart)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/hacknova/post",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"hacknova",
+								"post"
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "project_file",
+									"type": "file",
+									"description": "Optional ZIP project archive (max 100MB)"
+								},
+								{
+									"key": "project_title",
+									"value": "Autonomous Campus Security Bot",
+									"type": "text"
+								},
+								{
+									"key": "github_url",
+									"value": "https://github.com/pict/hacknova-team-alpha",
+									"type": "text"
+								},
+								{
+									"key": "live_demo_url",
+									"value": "https://hacknova-alpha.vercel.app",
+									"type": "text"
+								},
+								{
+									"key": "team_name",
+									"value": "Alpha Squad",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Computer vision pipeline for pedestrian flow density analysis.",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"HackNova submit reachable\", function () {",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET HackNova View My Submission",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/hacknova/get",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"hacknova",
+								"get"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Get HackNova 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET HackNova Results (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/hacknova/getresult",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"hacknova",
+								"getresult"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Admin HackNova results reachable\", function () {",
+									"    pm.expect([200, 401]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "5-Root Cause (EMS 21)",
+			"description": "Theme: PICT OSS Bugathon. Submit PR URL, patch archive, and debugging root cause explanation.",
+			"item": [
+				{
+					"name": "POST Root Cause Submit Bug Fix to S3 (multipart)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/rootcause/post",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rootcause",
+								"post"
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "patch_file",
+									"type": "file",
+									"description": "Optional patch/diff archive (max 50MB)"
+								},
+								{
+									"key": "github_pr_url",
+									"value": "https://github.com/pict-oss/bugathon/pull/101",
+									"type": "text"
+								},
+								{
+									"key": "team_name",
+									"value": "RootBusters",
+									"type": "text"
+								},
+								{
+									"key": "notes",
+									"value": "Fixed thread concurrency deadlock in the event dispatcher retry loop.",
+									"type": "text"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Root Cause submit reachable\", function () {",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Root Cause View My Submission",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/rootcause/get",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rootcause",
+								"get"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Get Root Cause 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Root Cause Results (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/rootcause/getresult",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"rootcause",
+								"getresult"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Admin Root Cause results reachable\", function () {",
+									"    pm.expect([200, 401]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "6-Portals & Catalogs",
+			"description": "Public status checks for submission portals and event catalog sync.",
+			"item": [
+				{
+					"name": "GET Portal Status: Freeze",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/submission/freeze",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"submission",
+								"freeze"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Portal status 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().status).to.be.a(\"boolean\");",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Portal Status: Innowave",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/submission/innowave",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"submission",
+								"innowave"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Portal Status: HackNova",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/submission/hacknova",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"submission",
+								"hacknova"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Portal Status: Root Cause",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/submission/rootcause",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"submission",
+								"rootcause"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET All Configured Portals (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/submission/get",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"submission",
+								"get"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Events From Live EMS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/allevents/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"allevents",
+								"events"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Events From Local DB",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/allevents/addevents",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"allevents",
+								"addevents"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7-Admin",
+			"description": "Admin login, profile, and CSV submission export endpoints.",
+			"item": [
+				{
+					"name": "POST Admin Signin (Auto-Saves {{adminToken}})",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/signin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"signin"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Admin signin 200 + token\", function () {",
+									"    if (pm.response.code === 200) {",
+									"        var j = pm.response.json();",
+									"        pm.expect(j.token).to.exist;",
+									"        pm.collectionVariables.set(\"adminToken\", j.token);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET Admin Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"me"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Export CSV: Freeze The Second",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/csv/freeze",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"csv",
+								"freeze"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Export CSV: Innowave",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/csv/innowave",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"csv",
+								"innowave"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Export CSV: HackNova",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/csv/hacknova",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"csv",
+								"hacknova"
+							]
+						}
+					}
+				},
+				{
+					"name": "GET Export CSV: Root Cause",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/csv/rootcause",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"csv",
+								"rootcause"
+							]
+						}
+					}
+				},
+				{
+					"name": "POST Admin Signout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/signout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"signout"
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

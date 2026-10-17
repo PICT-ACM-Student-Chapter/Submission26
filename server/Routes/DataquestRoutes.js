@@ -4,15 +4,9 @@ const { PostDataQuest, getLeaderBoard, GetDataQuest, GetAllDataQuestSubmissions 
 const { isAdminAuthenticated } = require('../middleware/adminMiddlewares');
 const DQRouter=new express.Router();
 
-
 DQRouter.post("/post",isUserAuthenticated,PostDataQuest);
 DQRouter.get('/leaderboard',isUserAuthenticated,getLeaderBoard);
 DQRouter.get("/get",isUserAuthenticated,GetDataQuest);
 DQRouter.get("/getresult",isAdminAuthenticated,GetAllDataQuestSubmissions);
 
-
-
-
-
-
-module.exports=DQRouter;   
+module.exports=DQRouter;

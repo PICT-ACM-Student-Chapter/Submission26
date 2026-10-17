@@ -1,2 +1,0 @@
-"id","fk_user","submission_csv","submission_python","private_accuracy","public_accuracy","active_submission","created_at","updated_at"
-1,1,"https://raw.githubusercontent.com/plotly/datasets/master/2014_usa_states.csv","https://github.com/test/repo",100000,100000,true,"2025-10-14T12:52:52.642Z","2025-10-14T12:52:52.642Z"

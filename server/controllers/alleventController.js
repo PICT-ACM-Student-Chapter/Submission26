@@ -1,11 +1,11 @@
 const axios=require("axios"); 
 const client = require("../db/connect");
-//
 const GettingAllEvents = async (req, res) => {
     console.log("Fetching all events...");
+    const EMS_API = process.env.EMS_API || "https://api.pulzion.pictacm.in";
     const options = {
         method: "GET",
-        url: `${process.env.EMS_API}/events`,
+        url: `${EMS_API}/events`,
     };
     
     try {

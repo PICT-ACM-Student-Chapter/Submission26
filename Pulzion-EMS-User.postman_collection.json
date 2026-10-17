@@ -1,0 +1,2367 @@
+{
+	"info": {
+		"name": "Pulzion-EMS-User",
+		"_postman_id": "pulzion-ems-user-0001",
+		"description": "User-role tests for pulzion-26-ems-backend. Import + select Pulzion-local env. Run in folder order: Health > Auth > Events > Registration > Cart > Transaction > Slots > Misc. Auth uses Authorization: Bearer {{token}} (see middlewares/userMiddlewares.js isAuthenticated). Prefer /user/app/* routes to bypass recaptcha. Admin folders 9-13 use Authorization: Bearer {{adminToken}} (see middlewares/adminMiddlewares.js isAdminAuthenticated, role=admin). Run 9-Admin-Auth signin first to auto-save {{adminToken}}.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1-Health",
+			"item": [
+				{
+					"name": "GET ping",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/ping",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ping"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"ping 200 + pong\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.text()).to.include(\"pong\");",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "2-Auth",
+			"description": "Order: app/signup (201, no token) > email-verify (saves {{token}}) > app/signin. Signup auto-saves {{loginEmail}}; paste OTP from server logs into {{signupOtp}}. Unverified signin returns 403 with otpSent flag. Web signup/signin need real recaptchaToken.",
+			"item": [
+				{
+					"name": "POST user app signup (no captcha)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/app/signup",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"app",
+								"signup"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"email\": \"testuser_{{$randomInt}}@example.com\",\n  \"mobile_number\": \"9876543210\",\n  \"country\": \"India\",\n  \"college\": \"PICT\",\n  \"year\": \"SE\",\n  \"password\": \"<user_password>\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"signup 201, no token until verified\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var j = pm.response.json();",
+									"    pm.expect(j.token).to.not.exist;",
+									"    pm.expect(j.user).to.exist;",
+									"    pm.expect(j.user.email_verified).to.eql(false);",
+									"    if (j.user && j.user.id) pm.environment.set(\"userId\", j.user.id);",
+									"    if (j.user && j.user.email) pm.environment.set(\"loginEmail\", j.user.email);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user app signin (no captcha)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/app/signin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"app",
+								"signin"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"<user_password>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"signin 200 + token (403 if unverified - run email-verify first)\", function () {",
+									"    pm.expect([200, 403]).to.include(pm.response.code);",
+									"    var j = pm.response.json();",
+									"    if (pm.response.code === 200) {",
+									"        pm.expect(j.token).to.exist;",
+									"        pm.environment.set(\"token\", j.token);",
+									"    } else {",
+									"        pm.expect(j.email_verified).to.eql(false);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user email-verify",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/email-verify",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"email-verify"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"otp\": \"{{signupOtp}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"verify 200 + token (400 invalid/expired otp)\", function () {",
+									"    pm.expect([200, 400, 404]).to.include(pm.response.code);",
+									"    var j = pm.response.json();",
+									"    if (pm.response.code === 200) {",
+									"        pm.expect(j.token).to.exist;",
+									"        pm.environment.set(\"token\", j.token);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user email-verify resend",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/email-verify/resend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"email-verify",
+								"resend"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{loginEmail}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"resend reachable (200 sent/skipped, 400 already-verified)\", function () { pm.expect([200, 400, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user signup (web, needs recaptcha)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/signup",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"signup"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"email\": \"webuser@example.com\",\n  \"mobile_number\": \"9876543210\",\n  \"country\": \"India\",\n  \"college\": \"PICT\",\n  \"year\": \"SE\",\n  \"password\": \"<user_password>\",\n  \"recaptchaToken\": \"REPLACE_WITH_REAL_TOKEN\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Expect 400 Invalid Recaptcha with dummy token - proves route is live",
+									"pm.test(\"web signup reachable (201 or 400 recaptcha)\", function () {",
+									"    pm.expect([201, 400]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user signin (web, needs recaptcha)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/signin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"signin"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"<user_password>\",\n  \"recaptchaToken\": \"REPLACE_WITH_REAL_TOKEN\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"web signin reachable\", function () { pm.expect([200, 400]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET user me",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"me"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"me 200\", function () { pm.response.to.have.status(200); });",
+									"pm.test(\"no token -> 401\", function () {}); // duplicate request without header to verify 401 manually"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user otp",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"otp"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{loginEmail}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"otp sent or user-not-found\", function () { pm.expect([200, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user forget (reset password)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/forget",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"forget"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"otp\": \"{{otp}}\",\n  \"password\": \"<new_user_password>\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"forget reachable\", function () { pm.expect([200, 400, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET user no_of_registrations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/user/no_of_registrations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"no_of_registrations"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"200 + success bool\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().success).to.be.a(\"boolean\"); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user signout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/signout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"signout"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"signout 200 (run LAST)\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "3-Events",
+			"item": [
+				{
+					"name": "GET events all (public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"events 201 + array\", function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"    var j = pm.response.json();",
+									"    pm.expect(j.events).to.be.an(\"array\");",
+									"    if (j.events.length > 0) {",
+									"        pm.environment.set(\"eventId\", j.events[0].id);",
+									"        var paid = j.events.find(e => e.price > 0);",
+									"        var free = j.events.find(e => e.price == 0);",
+									"        if (paid) pm.environment.set(\"paidEventId\", paid.id);",
+									"        if (free) pm.environment.set(\"freeEventId\", free.id);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET events by id (public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/{{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								"{{eventId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"event by id 201\", function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET events allEvents (auth, combo-aware)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/events/allEvents",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								"allEvents"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"allEvents 200 auth\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET events combo by id (auth)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/events/combo/{{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								"combo",
+								"{{eventId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"combo event reachable\", function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "4-Registration",
+			"description": "POST with freeEventId -> direct registration + ticket. POST with paidEventId -> added to cart.",
+			"item": [
+				{
+					"name": "POST user_events register (free->register, paid->cart)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user_events/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user_events",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": {{freeEventId}}\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"register 201 (or 400 already-registered)\", function () { pm.expect([201, 400]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET user_events my registrations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user_events/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user_events",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"my events 200\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().events).to.be.an(\"array\"); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "5-Cart",
+			"description": "Test with paidEventId. Run emptyCart last in this folder.",
+			"item": [
+				{
+					"name": "POST cart add event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cart/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": {{paidEventId}}\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"add to cart 201 (409 dup / 400 free-event / 403 CodeX)\", function () { pm.expect([201, 400, 403, 404, 409]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET cart",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cart/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"get cart 200 or 404 empty\", function () { pm.expect([200, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET cart getOffers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cart/getOffers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"getOffers"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"offers 200\", function () { pm.response.to.have.status(200); });",
+									"var j = pm.response.json(); if (j.offers && j.offers.length) pm.environment.set(\"comboId\", j.offers[0].id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST cart add combo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cart/combo/{{comboId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"combo",
+								"{{comboId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"add combo 201 or 400\", function () { pm.expect([201, 400, 401]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE cart event",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cart/{{paidEventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"{{paidEventId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"delete event 200\", function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE cart combo",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cart/combo/{{comboId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"combo",
+								"{{comboId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"delete combo 201/404\", function () { pm.expect([201, 401, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE cart empty",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/cart/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"empty cart 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "6-Transaction",
+			"description": "Re-add to cart first if you emptied it. POST clears cart on success.",
+			"item": [
+				{
+					"name": "POST transaction create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transaction/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transaction",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": [\"{{paidEventId}}\"],\n  \"transaction_id\": \"TXN_{{$randomInt}}\",\n  \"combo_id\": [],\n  \"referral_code\": \"{{referralCode}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"transaction 200 (400 dup / 404 no-event)\", function () { pm.expect([200, 202, 400, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET transaction history",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transaction/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transaction",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"history 200\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().transactions).to.be.an(\"array\"); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "7-Slots",
+			"description": "Requires prior registration (user_event row). GET slots?event_id first to get slotId.",
+			"item": [
+				{
+					"name": "GET user_slots by event",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user_slots/?event_id={{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user_slots",
+								""
+							],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"slots 200\", function () { pm.response.to.have.status(200); });",
+									"var j = pm.response.json(); if (j.slots && j.slots.length) pm.environment.set(\"slotId\", j.slots[0].id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST user_slots book",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user_slots/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user_slots",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": {{eventId}},\n  \"slot_id\": {{slotId}}\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"book 200 (400 full/dup, 404 not-registered)\", function () { pm.expect([200, 400, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PUT user_slots reschedule",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user_slots/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user_slots",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": {{eventId}},\n  \"slot_id\": {{slotId}}\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"reschedule reachable\", function () { pm.expect([200, 400, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET slots public query",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/slots/?event_id={{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"slots",
+								""
+							],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"public slots 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "8-Misc",
+			"item": [
+				{
+					"name": "GET gallery",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/gallery/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"gallery",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"gallery 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST fcm_token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/fcm_token/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"fcm_token",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fcmToken\": \"test-fcm-token-{{$randomInt}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"fcm 201 (400 dup)\", function () { pm.expect([201, 400]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST deviceId",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/deviceId/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"deviceId",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deviceId\": \"test-device-{{$randomInt}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"device 201 (400 dup)\", function () { pm.expect([201, 400]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET leaderboard (public top 10)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/leaderboard/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"leaderboard",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"leaderboard 200 + shape\", function () { pm.response.to.have.status(200); var b = pm.response.json(); pm.expect(b.leaderboard).to.be.an(\"array\"); if (b.leaderboard.length) { pm.expect(b.leaderboard[0]).to.have.all.keys(\"full_name\", \"points\"); } });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "9-Admin-Auth",
+			"description": "Admin auth (server/routes/adminRoutes.js, mounted at /admin in app.js). Signin first - auto-saves {{adminToken}}. All other admin folders need Authorization: Bearer {{adminToken}} (middlewares/adminMiddlewares.js isAdminAuthenticated, role=admin). POST /admin/signup exists in controller but is commented out in routes - create admin via DB/seed, then signin here.",
+			"item": [
+				{
+					"name": "POST admin signin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/signin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"signin"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"signin 200 + adminToken\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var j = pm.response.json();",
+									"    pm.expect(j.token).to.exist;",
+									"    pm.environment.set(\"adminToken\", j.token);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET admin me",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"me"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"me 200 (401 without/invalid adminToken)\", function () { pm.expect([200, 401]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST admin fcmsendall",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/fcmsendall",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"fcmsendall"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Test broadcast\",\n  \"body\": \"Hello from admin\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"fcm reachable\", function () { pm.expect([200, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST admin eventRegister (verify payment)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/eventRegister",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"eventRegister"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"payment_form_id\": {{paymentFormId}},\n  \"status\": \"accepted\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"eventRegister reachable (200 accepted / 400 rejected-or-dup / 404 no-form)\", function () { pm.expect([200, 400, 401, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET admin paymentForm",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/paymentForm",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"paymentForm"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"paymentForm 200 (404 none found)\", function () { pm.expect([200, 401, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST admin signout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/signout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"signout"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"signout 200 (run LAST, clears nothing server-side)\", function () { pm.expect([200, 401]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "10-Admin-Events",
+			"description": "Event CRUD (server/routes/AdminEventRoutes.js, mounted at /admin_events). POST + PUT need admin auth. GET all + GET by id are public. DELETE /:id is commented out in routes (controllers/adminEventControllers.js deleteEvent exists but unreachable) - no request included.",
+			"item": [
+				{
+					"name": "POST admin_events create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_events/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_events",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test Event {{$randomInt}}\",\n  \"description\": \"desc\",\n  \"is_active\": true,\n  \"play\": false,\n  \"price\": 100,\n  \"type\": \"Technical\",\n  \"link\": \"https://example.com\",\n  \"whatsapp_link\": \"https://chat.whatsapp.com/example\",\n  \"logo\": \"https://example.com/logo.png\",\n  \"tagline\": \"tagline\",\n  \"rules\": \"rules\",\n  \"rounds\": \"round1\",\n  \"teams\": \"solo\",\n  \"notes\": \"notes\",\n  \"mode\": \"offline\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"create 200 (400 field-empty / 401 unauth)\", function () { pm.expect([200, 201, 400, 401]).to.include(pm.response.code); });",
+									"var j = pm.response.json(); if (j && j.event && j.event.id) pm.environment.set(\"eventId\", j.event.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PUT admin_events update by id",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_events/{{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_events",
+								"{{eventId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Event\",\n  \"description\": \"desc\",\n  \"is_active\": true,\n  \"play\": false,\n  \"price\": 100,\n  \"type\": \"Technical\",\n  \"link\": \"https://example.com\",\n  \"whatsapp_link\": \"https://chat.whatsapp.com/example\",\n  \"logo\": \"https://example.com/logo.png\",\n  \"tagline\": \"tagline\",\n  \"rules\": \"rules\",\n  \"rounds\": \"round1\",\n  \"teams\": \"solo\",\n  \"notes\": \"notes\",\n  \"mode\": \"offline\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"update reachable (200 / 400 / 404)\", function () { pm.expect([200, 400, 401, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET admin_events all (public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin_events/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_events",
+								""
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"all 200 + events array\", function () { pm.response.to.have.status(200); pm.expect(pm.response.json().events).to.be.an(\"array\"); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET admin_events by id (public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin_events/{{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_events",
+								"{{eventId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"by id 200 (404 unknown)\", function () { pm.expect([200, 400, 404]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "11-Admin-Combos",
+			"description": "Combo CRUD (server/routes/adminComboRoutes.js, mounted at /admin_combo). All need admin auth.",
+			"item": [
+				{
+					"name": "POST admin_combo addCombo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_combo/addCombo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_combo",
+								"addCombo"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"combo_name\": \"Test Combo {{$randomInt}}\",\n  \"array_of_evId\": [{{paidEventId}}],\n  \"discounted_price\": 100,\n  \"Terms_conditions\": \"Test T&C\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"addCombo 200 (400 incomplete / 401 unauth)\", function () { pm.expect([200, 201, 400, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET admin_combo allCombo",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_combo/allCombo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_combo",
+								"allCombo"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"allCombo 200\", function () { pm.response.to.have.status(200); });",
+									"var j = pm.response.json(); if (j.combo && j.combo.length) pm.environment.set(\"comboId\", j.combo[0].id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET admin_combo by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_combo/allComboById/{{comboId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_combo",
+								"allComboById",
+								"{{comboId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"by id 200 (404 unknown)\", function () { pm.expect([200, 401, 404, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PUT admin_combo updateCombo",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_combo/updateCombo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_combo",
+								"updateCombo"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": {{comboId}},\n  \"combo_name\": \"Updated Combo\",\n  \"array_of_evId\": [{{paidEventId}}],\n  \"array_of_evName\": [],\n  \"discounted_price\": 90,\n  \"Terms_conditions\": \"Updated T&C\",\n  \"status\": true\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"updateCombo reachable\", function () { pm.expect([200, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH admin_combo updateStatus",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_combo/updateStatus/{{comboId}}/true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_combo",
+								"updateStatus",
+								"{{comboId}}",
+								"true"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"updateStatus 200\", function () { pm.expect([200, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH admin_combo addEvent",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_combo/addEvent/{{comboId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_combo",
+								"addEvent",
+								"{{comboId}}"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"evId\": {{eventId}},\n  \"evName\": {\"id\": {{eventId}}, \"name\": \"Test Event\"}\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"addEvent 200\", function () { pm.expect([200, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE admin_combo delCombo",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin_combo/delCombo/{{comboId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin_combo",
+								"delCombo",
+								"{{comboId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"delCombo 200 (404 unknown, run LAST)\", function () { pm.expect([200, 401, 404, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "12-Admin-Dashboard",
+			"description": "Read-only stats (server/routes/adminDashboardRoutes.js, mounted at /dashboard). All need admin auth.",
+			"item": [
+				{
+					"name": "GET dashboard events",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"events"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"events 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET dashboard registeration (note typo in route)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/registeration",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"registeration"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"registrations 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET dashboard counts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/counts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"counts"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"counts 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET dashboard getCombosCount",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/getCombosCount",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"getCombosCount"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"combosCount 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET dashboard getCombosCount by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/getCombosCount/{{comboId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"getCombosCount",
+								"{{comboId}}"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"comboCount by id 200\", function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "13-Admin-Slots",
+			"description": "Slot CRUD (server/routes/adminslotcrud.js, mounted at /slots in app.js). POST + DELETE + GET /users need admin auth. GET / query (event_id/slot_id/capacity/start_time/end_time) has NO auth middleware in code. Admin mail routes (/admin_mail) have both handlers commented out - no live routes, omitted.",
+			"item": [
+				{
+					"name": "GET slots by event_id (public in code)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/slots/?event_id={{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"slots",
+								""
+							],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"slots 200\", function () { pm.response.to.have.status(200); });",
+									"var j = pm.response.json(); var s = j.slots || (j.slot ? [j.slot] : []); if (s.length && s[0].id) pm.environment.set(\"slotId\", s[0].id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET slots by slot_id (public in code)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/slots/?slot_id={{slotId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"slots",
+								""
+							],
+							"query": [
+								{
+									"key": "slot_id",
+									"value": "{{slotId}}"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"slot by id reachable\", function () { pm.expect([200, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST slots create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/slots/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"slots",
+								""
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"start_time\": \"2026-02-20T10:00:00Z\",\n  \"end_time\": \"2026-02-20T12:00:00Z\",\n  \"capacity\": 50,\n  \"year\": \"SE\",\n  \"fk_event\": {{eventId}}\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"create 200 (401 unauth / 500 bad-fk)\", function () { pm.expect([200, 201, 401, 500]).to.include(pm.response.code); });",
+									"var j = pm.response.json(); if (j && j.slot && j.slot.id) pm.environment.set(\"slotId\", j.slot.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET slots users (no-slot registrations)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/slots/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"slots",
+								"users"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"users 200\", function () { pm.expect([200, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE slots by slot_id",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/slots/?slot_id={{slotId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"slots",
+								""
+							],
+							"query": [
+								{
+									"key": "slot_id",
+									"value": "{{slotId}}"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"delete slot reachable (200 / 400 not-found)\", function () { pm.expect([200, 400, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE slots by event_id (deletes ALL slots of event)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/slots/?event_id={{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"slots",
+								""
+							],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"delete by event reachable - run LAST, destructive\", function () { pm.expect([200, 400, 401, 500]).to.include(pm.response.code); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

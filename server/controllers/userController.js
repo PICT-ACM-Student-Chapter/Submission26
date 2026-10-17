@@ -4,13 +4,14 @@ const {generateUserToken} = require("../utils/generateUserTokens");
 const {FetchUserSubmissionEvents}= require("../utils/fetchEvents");
 
 
+const EMS_API = process.env.EMS_API || "https://api.pulzion.pictacm.in";
+
 const signInUser=async (req, res) => {
     const { email, password } = req.body;
-    console.log(`email : ${email}`);
-    console.log(`password : ${password}`); 
+    console.log(`email : ${email}`); 
     const options = {
         method: "POST",
-        url: `${process.env.EMS_API}/user/app/signin`,
+        url: `${EMS_API}/user/app/signin`,
         headers: {
             "Content-Type": "application/json",
         },
@@ -138,7 +139,7 @@ const GetUserEvent = async (req, res) => {
 const signoutUser= async (req, res) => {    
     const options = {
         method: "POST",
-        url: `${process.env.EMS_API}/user/app/signout`,
+        url: `${EMS_API}/user/app/signout`,
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${req.ems_token}`,
