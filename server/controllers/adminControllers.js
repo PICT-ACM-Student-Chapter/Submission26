@@ -875,6 +875,7 @@ const getCsvPortal = async (req, res) => {
     <script>
         const TOKEN_KEY = "pulzion_admin_token";
         const ADMIN_INFO_KEY = "pulzion_admin_user";
+        const BASE_PATH = window.location.pathname.startsWith("/backend-api") ? "/backend-api" : "";
 
         const loginSection = document.getElementById("loginSection");
         const dashboardSection = document.getElementById("dashboardSection");
@@ -911,6 +912,8 @@ const getCsvPortal = async (req, res) => {
         }
 
         async function init() {
+            if (hacknovaTeamsDownloadBtn) hacknovaTeamsDownloadBtn.href = BASE_PATH + "/admin/csv/hacknova-teams";
+            if (masterDownloadBtn) masterDownloadBtn.href = BASE_PATH + "/admin/csv/all";
             const urlParams = new URLSearchParams(window.location.search);
             const urlToken = urlParams.get("token") || urlParams.get("admin_token");
 
@@ -935,7 +938,7 @@ const getCsvPortal = async (req, res) => {
 
         async function loadDashboard(token, adminInfo) {
             try {
-                const res = await fetch("/admin/csv/summary?token=" + encodeURIComponent(token));
+                const res = await fetch(BASE_PATH + "/admin/csv/summary?token=" + encodeURIComponent(token));
                 if (!res.ok) {
                     throw new Error("Session expired or unauthorized");
                 }
@@ -978,9 +981,9 @@ const getCsvPortal = async (req, res) => {
 
             const hacknovaTeamsDownloadBtn = document.getElementById("hacknovaTeamsDownloadBtn");
             if (hacknovaTeamsDownloadBtn) {
-                hacknovaTeamsDownloadBtn.href = "/admin/csv/hacknova-teams?token=" + encodeURIComponent(token);
+                hacknovaTeamsDownloadBtn.href = BASE_PATH + "/admin/csv/hacknova-teams?token=" + encodeURIComponent(token);
             }
-            masterDownloadBtn.href = "/admin/csv/all?token=" + encodeURIComponent(token);
+            masterDownloadBtn.href = BASE_PATH + "/admin/csv/all?token=" + encodeURIComponent(token);
 
             eventCardsGrid.innerHTML = currentEvents.map(ev => {
                 const isActive = Boolean(ev.isSubmissionActive);
@@ -1027,8 +1030,8 @@ const getCsvPortal = async (req, res) => {
                         </div>
 
                         <div class="actions">
-                            <a href="\${ev.downloadPath}?token=\${encodeURIComponent(token)}" class="btn btn-primary" download>📥 Download CSV</a>
-                            <a href="\${ev.directPath}?token=\${encodeURIComponent(token)}" class="btn btn-secondary" download>Direct Route</a>
+                            <a href="\${BASE_PATH}\${ev.downloadPath}?token=\${encodeURIComponent(token)}" class="btn btn-primary" download>📥 Download CSV</a>
+                            <a href="\${BASE_PATH}\${ev.directPath}?token=\${encodeURIComponent(token)}" class="btn btn-secondary" download>Direct Route</a>
                         </div>
                     </div>
                 \`;
@@ -1051,7 +1054,7 @@ const getCsvPortal = async (req, res) => {
             if (btnNo) btnNo.disabled = true;
 
             try {
-                const res = await fetch("/admin/submission-status/" + eventId + "?token=" + encodeURIComponent(token), {
+                const res = await fetch(BASE_PATH + "/admin/submission-status/" + eventId + "?token=" + encodeURIComponent(token), {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -1101,7 +1104,7 @@ const getCsvPortal = async (req, res) => {
             closeAllBtn.disabled = true;
 
             try {
-                const res = await fetch("/admin/submission-status/toggle-all?token=" + encodeURIComponent(token), {
+                const res = await fetch(BASE_PATH + "/admin/submission-status/toggle-all?token=" + encodeURIComponent(token), {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -1151,7 +1154,7 @@ const getCsvPortal = async (req, res) => {
             const password = document.getElementById("passwordInput").value;
 
             try {
-                const res = await fetch("/admin/signin", {
+                const res = await fetch(BASE_PATH + "/admin/signin", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
