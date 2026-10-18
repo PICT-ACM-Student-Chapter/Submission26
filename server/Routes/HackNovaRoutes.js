@@ -8,6 +8,8 @@ const {
 } = require("../controllers/HackNovaController");
 const isUserAuthenticated = require("../middleware/userMiddleware");
 const { isAdminAuthenticated } = require("../middleware/adminMiddlewares");
+const { checkSubmissionActive } = require("../middleware/checkSubmissionActive");
+const { emsIds } = require("../models/master");
 const { createS3Uploader } = require("../utils/s3Upload");
 
 const HackNovaRouter = new express.Router();
@@ -45,13 +47,13 @@ const singleFileHandler = (req, res, next) => {
   });
 };
 
-// 1. Submit HackNova project (Accepts PPTX/PDF presentation, GitHub link, Project ZIP)
-HackNovaRouter.post("/", isUserAuthenticated, uploadHandler, postHackNova);
-HackNovaRouter.post("/post", isUserAuthenticated, uploadHandler, postHackNova);
+// 1. Submit HackNova project (Accepts PPTX/PDF presentation, GitHub link, Project ZIP - Guarded by checkSubmissionActive)
+HackNovaRouter.post("/", isUserAuthenticated, checkSubmissionActive(emsIds.hacknova), uploadHandler, postHackNova);
+HackNovaRouter.post("/post", isUserAuthenticated, checkSubmissionActive(emsIds.hacknova), uploadHandler, postHackNova);
 
-// 2. Direct S3 Upload Helper (upload PPTX/PDF or ZIP and immediately get S3 URL)
-HackNovaRouter.post("/upload-file", isUserAuthenticated, singleFileHandler, uploadHackNovaFile);
-HackNovaRouter.post("/upload", isUserAuthenticated, uploadHandler, postHackNova);
+// 2. Direct S3 Upload Helper (upload PPTX/PDF or ZIP and immediately get S3 URL - Guarded by checkSubmissionActive)
+HackNovaRouter.post("/upload-file", isUserAuthenticated, checkSubmissionActive(emsIds.hacknova), singleFileHandler, uploadHackNovaFile);
+HackNovaRouter.post("/upload", isUserAuthenticated, checkSubmissionActive(emsIds.hacknova), uploadHandler, postHackNova);
 
 // 3. User & Admin endpoints
 HackNovaRouter.get("/", isUserAuthenticated, getHackNova);

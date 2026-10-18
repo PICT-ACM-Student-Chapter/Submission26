@@ -1,6 +1,5 @@
-const express =require('express');
-const   AdminRouter=new express.Router();
-
+const express = require('express');
+const AdminRouter = new express.Router();
 
 const {
     signUpAdmin,
@@ -12,7 +11,11 @@ const {
     getEventSummaryList,
     getCsvPortal,
 } = require("../controllers/adminControllers");
-const {isAdminAuthenticated} = require("../middleware/adminMiddlewares");
+const {
+    updateSubmissionEvent,
+    updateAllSubmissionEvents,
+} = require("../controllers/SubmissionEventController");
+const { isAdminAuthenticated } = require("../middleware/adminMiddlewares");
 
 // Public Admin Login Route
 AdminRouter.post("/signin", signInAdmin);
@@ -34,12 +37,12 @@ AdminRouter.get("/csv/summary", isAdminAuthenticated, getEventSummaryList);
 AdminRouter.get("/csv", isAdminAuthenticated, getAllCsv);
 AdminRouter.get("/submissions/csv", isAdminAuthenticated, getAllCsv);
 AdminRouter.get("/csv/:event", isAdminAuthenticated, getcsv);
-AdminRouter.get("/export-csv/:event", isAdminAuthenticated, getcsv); 
+AdminRouter.get("/export-csv/:event", isAdminAuthenticated, getcsv);
 
+// Submission Status Management Endpoints
+AdminRouter.post("/submission-status/toggle-all", isAdminAuthenticated, updateAllSubmissionEvents);
+AdminRouter.patch("/submission-status/toggle-all", isAdminAuthenticated, updateAllSubmissionEvents);
+AdminRouter.post("/submission-status/:id", isAdminAuthenticated, updateSubmissionEvent);
+AdminRouter.patch("/submission-status/:id", isAdminAuthenticated, updateSubmissionEvent);
 
-
-
-
-
-module.exports=AdminRouter;   
-
+module.exports = AdminRouter;

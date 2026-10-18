@@ -429,6 +429,52 @@ Admin view of all configured submission portals and their status.
 
 ---
 
+### 3. `PATCH /submission/update/:id` (or `POST /admin/submission-status/:id`)
+Toggle submission acceptance active or inactive for a specific event.
+
+- **Auth**: `Authorization: Bearer {{adminToken}}`
+- **URL Param**: `id` (`10`, `12`, `20`, `21` or event aliases like `freeze`, `hacknova`)
+- **Body**:
+  ```json
+  {
+    "status": false
+  }
+  ```
+- **Response**: `200 OK`
+  ```json
+  {
+    "success": true,
+    "message": "Submissions for FREEZE THE SECOND are now INACTIVE (Closed).",
+    "event_id": 10,
+    "event_status": false
+  }
+  ```
+
+> When `event_status` is `false`, any submission attempts for this event will be immediately rejected with `403 Forbidden` (`{"error": "Submissions for <Event> are currently closed."}`).
+
+---
+
+### 4. `PATCH /submission/update-all` (or `POST /admin/submission-status/toggle-all`)
+Batch update all event submission statuses in one click.
+
+- **Auth**: `Authorization: Bearer {{adminToken}}`
+- **Body**:
+  ```json
+  {
+    "status": true
+  }
+  ```
+- **Response**: `200 OK`
+  ```json
+  {
+    "success": true,
+    "message": "All event submissions set to ACTIVE (Accepting submissions).",
+    "event_status": true
+  }
+  ```
+
+---
+
 ## 🌐 Catalog & EMS Sync Routes
 
 ### 1. `GET /allevents/events`

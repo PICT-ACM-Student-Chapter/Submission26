@@ -7,6 +7,8 @@ const {
 } = require("../controllers/RootCauseController");
 const isUserAuthenticated = require("../middleware/userMiddleware");
 const { isAdminAuthenticated } = require("../middleware/adminMiddlewares");
+const { checkSubmissionActive } = require("../middleware/checkSubmissionActive");
+const { emsIds } = require("../models/master");
 const { createS3Uploader } = require("../utils/s3Upload");
 
 const RootCauseRouter = new express.Router();
@@ -21,10 +23,10 @@ const uploadHandler = (req, res, next) => {
   });
 };
 
-// Handles patch/zip upload and/or PR URLs
-RootCauseRouter.post("/", isUserAuthenticated, uploadHandler, postRootCause);
-RootCauseRouter.post("/post", isUserAuthenticated, uploadHandler, postRootCause);
-RootCauseRouter.post("/upload", isUserAuthenticated, uploadHandler, postRootCause);
+// Handles patch/zip upload and/or PR URLs (Guarded by checkSubmissionActive)
+RootCauseRouter.post("/", isUserAuthenticated, checkSubmissionActive(emsIds.rootcause), uploadHandler, postRootCause);
+RootCauseRouter.post("/post", isUserAuthenticated, checkSubmissionActive(emsIds.rootcause), uploadHandler, postRootCause);
+RootCauseRouter.post("/upload", isUserAuthenticated, checkSubmissionActive(emsIds.rootcause), uploadHandler, postRootCause);
 
 RootCauseRouter.get("/", isUserAuthenticated, getRootCause);
 RootCauseRouter.get("/get", isUserAuthenticated, getRootCause);

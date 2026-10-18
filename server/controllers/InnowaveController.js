@@ -1,5 +1,6 @@
 const client = require("../db/connect");
 const { emsIds } = require("../models/master");
+const { isSubmissionActive } = require("../middleware/checkSubmissionActive");
 
 /**
  * Innowave Round 1: Idea deck submission (PDF/PPT) & Pitch Video URL
@@ -7,6 +8,16 @@ const { emsIds } = require("../models/master");
 const postInnowave = async (req, res) => {
   try {
     const ems_id = emsIds.innowave;
+
+    // Check if submission is active for Innowave
+    const activeCheck = await isSubmissionActive(ems_id);
+    if (!activeCheck.active) {
+      return res.status(403).json({
+        error: `Submissions for ${activeCheck.eventName || "Innowave"} are currently closed.`,
+        message: `Submissions for ${activeCheck.eventName || "Innowave"} are not active at this time.`,
+        event_status: false,
+      });
+    }
 
     // Check if user is registered for Innowave
     const registrationCheck = await client.query(
@@ -78,6 +89,15 @@ const postInnowave = async (req, res) => {
  */
 const patchChangelog = async (req, res) => {
   try {
+    const activeCheck = await isSubmissionActive(emsIds.innowave);
+    if (!activeCheck.active) {
+      return res.status(403).json({
+        error: `Submissions for ${activeCheck.eventName || "Innowave"} are currently closed.`,
+        message: `Submissions for ${activeCheck.eventName || "Innowave"} are not active at this time.`,
+        event_status: false,
+      });
+    }
+
     const { changelog } = req.body;
     if (!changelog) {
       return res.status(400).json({

@@ -2,6 +2,8 @@ const express = require("express");
 const isUserAuthenticated = require("../middleware/userMiddleware");
 const { PostFreeze, getFreeze, ResultFreeze, exportFreezeCsv } = require("../controllers/FreezeController");
 const { isAdminAuthenticated } = require("../middleware/adminMiddlewares");
+const { checkSubmissionActive } = require("../middleware/checkSubmissionActive");
+const { emsIds } = require("../models/master");
 const { createS3Uploader } = require("../utils/s3Upload");
 
 const FreezeRouter = new express.Router();
@@ -16,10 +18,10 @@ const uploadHandler = (req, res, next) => {
   });
 };
 
-// Accepts multipart/form-data with file or JSON submission
-FreezeRouter.post("/", isUserAuthenticated, uploadHandler, PostFreeze);
-FreezeRouter.post("/post", isUserAuthenticated, uploadHandler, PostFreeze);
-FreezeRouter.post("/upload", isUserAuthenticated, uploadHandler, PostFreeze);
+// Accepts multipart/form-data with file or JSON submission (Guarded by checkSubmissionActive)
+FreezeRouter.post("/", isUserAuthenticated, checkSubmissionActive(emsIds.freeze), uploadHandler, PostFreeze);
+FreezeRouter.post("/post", isUserAuthenticated, checkSubmissionActive(emsIds.freeze), uploadHandler, PostFreeze);
+FreezeRouter.post("/upload", isUserAuthenticated, checkSubmissionActive(emsIds.freeze), uploadHandler, PostFreeze);
 
 FreezeRouter.get("/", isUserAuthenticated, getFreeze);
 FreezeRouter.get("/get", isUserAuthenticated, getFreeze);

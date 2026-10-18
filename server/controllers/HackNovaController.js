@@ -1,5 +1,6 @@
 const client = require("../db/connect");
 const { emsIds } = require("../models/master");
+const { isSubmissionActive } = require("../middleware/checkSubmissionActive");
 
 /**
  * HackNova Project Submission (Accepts S3 file zip, GitHub URL, Live Demo link)
@@ -7,6 +8,16 @@ const { emsIds } = require("../models/master");
 const postHackNova = async (req, res) => {
   try {
     const ems_id = emsIds.hacknova;
+
+    // Check if submission is active for HackNova
+    const activeCheck = await isSubmissionActive(ems_id);
+    if (!activeCheck.active) {
+      return res.status(403).json({
+        error: `Submissions for ${activeCheck.eventName || "HackNova"} are currently closed.`,
+        message: `Submissions for ${activeCheck.eventName || "HackNova"} are not active at this time.`,
+        event_status: false,
+      });
+    }
 
     // Verify registration for HackNova
     const registrationCheck = await client.query(
@@ -114,6 +125,15 @@ const postHackNova = async (req, res) => {
  */
 const uploadHackNovaFile = async (req, res) => {
   try {
+    const activeCheck = await isSubmissionActive(emsIds.hacknova);
+    if (!activeCheck.active) {
+      return res.status(403).json({
+        error: `Submissions for ${activeCheck.eventName || "HackNova"} are currently closed.`,
+        message: `Submissions for ${activeCheck.eventName || "HackNova"} are not active at this time.`,
+        event_status: false,
+      });
+    }
+
     if (!req.file && (!req.files || req.files.length === 0)) {
       return res.status(400).json({ error: "No file provided for upload." });
     }

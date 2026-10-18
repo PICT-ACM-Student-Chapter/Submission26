@@ -8,6 +8,8 @@ const {
 } = require("../controllers/InnowaveController");
 const isUserAuthenticated = require("../middleware/userMiddleware");
 const { isAdminAuthenticated } = require("../middleware/adminMiddlewares");
+const { checkSubmissionActive } = require("../middleware/checkSubmissionActive");
+const { emsIds } = require("../models/master");
 const { createS3Uploader } = require("../utils/s3Upload");
 
 const InnowaveRouter = new express.Router();
@@ -26,12 +28,12 @@ const uploadHandler = (req, res, next) => {
   });
 };
 
-// Support file upload or direct payload
-InnowaveRouter.post("/", isUserAuthenticated, uploadHandler, postInnowave);
-InnowaveRouter.post("/post", isUserAuthenticated, uploadHandler, postInnowave);
-InnowaveRouter.post("/upload", isUserAuthenticated, uploadHandler, postInnowave);
+// Support file upload or direct payload (Guarded by checkSubmissionActive)
+InnowaveRouter.post("/", isUserAuthenticated, checkSubmissionActive(emsIds.innowave), uploadHandler, postInnowave);
+InnowaveRouter.post("/post", isUserAuthenticated, checkSubmissionActive(emsIds.innowave), uploadHandler, postInnowave);
+InnowaveRouter.post("/upload", isUserAuthenticated, checkSubmissionActive(emsIds.innowave), uploadHandler, postInnowave);
 
-InnowaveRouter.patch("/changelog", isUserAuthenticated, patchChangelog);
+InnowaveRouter.patch("/changelog", isUserAuthenticated, checkSubmissionActive(emsIds.innowave), patchChangelog);
 InnowaveRouter.get("/", isUserAuthenticated, getInnowave);
 InnowaveRouter.get("/get", isUserAuthenticated, getInnowave);
 InnowaveRouter.get("/getresult", isAdminAuthenticated, ResultInnowave);

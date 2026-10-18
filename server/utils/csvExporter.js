@@ -449,12 +449,34 @@ async function getEventsSummary() {
   for (const key of Object.keys(EVENT_SPECS)) {
     const spec = EVENT_SPECS[key];
     const res = await client.query(`SELECT COUNT(*) AS count FROM ${spec.table};`);
+    
+    // Fetch live submission acceptance status from submission_event
+    let isSubmissionActive = true;
+    let eventRoute = `/${key}`;
+    try {
+      const statusRes = await client.query(
+        `SELECT event_status, event_route FROM submission_event WHERE event_id = $1 LIMIT 1;`,
+        [spec.emsId]
+      );
+      if (statusRes.rows.length > 0) {
+        isSubmissionActive = statusRes.rows[0].event_status !== false;
+        if (statusRes.rows[0].event_route) {
+          eventRoute = statusRes.rows[0].event_route;
+        }
+      }
+    } catch (e) {
+      console.error(`Error querying submission_event for ${spec.eventName}:`, e.message);
+    }
+
     summary.push({
       key,
       name: spec.eventName,
       emsId: spec.emsId,
       table: spec.table,
       submissionsCount: parseInt(res.rows[0].count, 10),
+      isSubmissionActive,
+      eventStatus: isSubmissionActive,
+      eventRoute,
       downloadPath: `/admin/csv/${key}`,
       directPath: `/${key}/csv`,
     });

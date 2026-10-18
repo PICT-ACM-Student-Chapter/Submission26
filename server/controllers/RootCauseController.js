@@ -1,5 +1,6 @@
 const client = require("../db/connect");
 const { emsIds } = require("../models/master");
+const { isSubmissionActive } = require("../middleware/checkSubmissionActive");
 
 /**
  * Root Cause Bugathon Submission (GitHub PR URL, Patch file upload to S3, fix explanation)
@@ -7,6 +8,16 @@ const { emsIds } = require("../models/master");
 const postRootCause = async (req, res) => {
   try {
     const ems_id = emsIds.rootcause;
+
+    // Check if submission is active for Root Cause
+    const activeCheck = await isSubmissionActive(ems_id);
+    if (!activeCheck.active) {
+      return res.status(403).json({
+        error: `Submissions for ${activeCheck.eventName || "Root Cause"} are currently closed.`,
+        message: `Submissions for ${activeCheck.eventName || "Root Cause"} are not active at this time.`,
+        event_status: false,
+      });
+    }
 
     // Verify user registration for Root Cause
     const registrationCheck = await client.query(

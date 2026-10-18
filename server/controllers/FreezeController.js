@@ -1,5 +1,6 @@
 const client = require("../db/connect");
 const { emsIds } = require("../models/master");
+const { isSubmissionActive } = require("../middleware/checkSubmissionActive");
 
 /**
  * Handle Freeze the Second submission (Supports S3 file upload and/or direct URL)
@@ -7,6 +8,16 @@ const { emsIds } = require("../models/master");
 const PostFreeze = async (req, res) => {
   try {
     const ems_id = emsIds.freeze;
+
+    // Check if submission is active for Freeze the Second
+    const activeCheck = await isSubmissionActive(ems_id);
+    if (!activeCheck.active) {
+      return res.status(403).json({
+        error: `Submissions for ${activeCheck.eventName || "Freeze the Second"} are currently closed.`,
+        message: `Submissions for ${activeCheck.eventName || "Freeze the Second"} are not active at this time.`,
+        event_status: false,
+      });
+    }
 
     // Check if user is registered for Freeze the Second
     const registrationCheck = await client.query(
