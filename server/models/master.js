@@ -19,6 +19,11 @@ const masterEvents = [
     ems_id: 21,
     name: "Root Cause",
   },
+  {
+    id: 5,
+    ems_id: 200,
+    name: "HackNova Squad Registrations",
+  },
 ];
 
 const emsIds = {
@@ -26,6 +31,9 @@ const emsIds = {
   freeze: 10,
   innowave: 12,
   rootcause: 21,
+  hacknova_teams: 200,
+  hacknovaTeams: 200,
+  hacknovateams: 200,
 };
 
 module.exports = { masterEvents, emsIds };

@@ -14,11 +14,12 @@ const checkSubmissionActive = (eventId) => {
         [eventId]
       );
 
-      if (result.rowCount > 0 && result.rows[0].event_status === false) {
-        const eventName = result.rows[0].event_name || "this event";
+      // Fail-closed: If not found in submission_event OR event_status is false / not true
+      if (result.rowCount === 0 || result.rows[0].event_status !== true) {
+        const eventName = result.rows[0]?.event_name || "this event";
         return res.status(403).json({
           error: `Submissions for ${eventName} are currently closed.`,
-          message: `Submissions for ${eventName} are not active at this time.`,
+          message: `Submissions for ${eventName} are not active. No submissions will be accepted or stored in the database.`,
           event_status: false,
           event_id: eventId,
         });
@@ -27,8 +28,7 @@ const checkSubmissionActive = (eventId) => {
       next();
     } catch (err) {
       console.error(`Error checking submission active status for event ${eventId}:`, err);
-      // Let it pass to controller if there's an unexpected DB error in middleware
-      next();
+      return res.status(500).json({ error: "Failed to verify event submission status." });
     }
   };
 };
@@ -45,15 +45,15 @@ const isSubmissionActive = async (eventId) => {
       [eventId]
     );
     if (result.rowCount === 0) {
-      return { active: true, eventName: "Event" };
+      return { active: false, eventName: "Event" };
     }
     return {
-      active: result.rows[0].event_status !== false,
+      active: result.rows[0].event_status === true,
       eventName: result.rows[0].event_name || "Event",
     };
   } catch (err) {
     console.error(`Error in isSubmissionActive(${eventId}):`, err);
-    return { active: true, eventName: "Event" };
+    return { active: false, eventName: "Event" };
   }
 };
 

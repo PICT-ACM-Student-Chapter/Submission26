@@ -89,21 +89,24 @@ const PostFreeze = async (req, res) => {
  */
 const getFreeze = async (req, res) => {
   try {
+    const activeCheck = await isSubmissionActive(emsIds.freeze);
     const response = await client.query(
       "SELECT * FROM freeze_submission WHERE fk_user = $1",
       [req.user.id]
     );
-    if (response.rowCount === 0) {
-      return res.status(200).json({
-        message: "Nothing Submitted",
-        submission: null,
-      });
-    }
+
+    const submission = response.rowCount > 0 ? {
+      ...response.rows[0],
+      ems_user_id: response.rows[0].ems_user_id || req.user.ems_id,
+    } : null;
+
     return res.status(200).json({
-      submission: {
-        ...response.rows[0],
-        ems_user_id: response.rows[0].ems_user_id || req.user.ems_id,
-      },
+      message: submission ? "Submission fetched" : "Nothing Submitted",
+      submission,
+      submission_active: activeCheck.active,
+      is_submission_active: activeCheck.active,
+      event_status: activeCheck.active,
+      event_name: activeCheck.eventName,
     });
   } catch (error) {
     console.error("Error in getFreeze:", error);

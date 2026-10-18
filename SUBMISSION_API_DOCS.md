@@ -298,6 +298,97 @@ Upload a PPTX, PDF, or ZIP file to S3 first to obtain its URL:
 
 ---
 
+### 👥 HackNova Team Registration (2–4 Members)
+
+The HackNova Team Registration endpoints automatically fetch the authenticated team leader's verified profile and permanently lock the team roster upon submission.
+
+#### 1. Fetch Leader Details & Registration Status
+- **Method & Path**: `GET /hacknova/team/me` (or `GET /api/hacknova/team/me`)
+- **Auth**: `Authorization: Bearer {{token}}`
+- **Response**: `200 OK`
+  ```json
+  {
+    "leader": {
+      "user_id": 1,
+      "name": "Jane Leader",
+      "email": "jane@example.com",
+      "phone": "9876543210",
+      "college": "PICT",
+      "year": "TE",
+      "ems_id": 105
+    },
+    "is_registered_for_event": true,
+    "is_team_registered": false,
+    "is_locked": false,
+    "submission_active": true,
+    "team": null
+  }
+  ```
+
+#### 2. Submit Team Registration
+- **Method & Path**: `POST /hacknova/team` (or `POST /api/hacknova/team`)
+- **Auth**: `Authorization: Bearer {{token}}`
+- **Content-Type**: `application/json`
+- **Rules**:
+  - `team_name`: Mandatory (2–255 characters).
+  - Member 1 (Leader): Automatically bound to authenticated user.
+  - Member 2: Mandatory (`name`, `email`, `phone`).
+  - Member 3: Optional (`name`, `email`, `phone`).
+  - Member 4: Optional (`name`, `email`, `phone` — cannot be added without Member 3).
+  - All member emails and phone numbers must be unique within the team.
+  - Team leader can register only once (permanently locked on success).
+- **Request Body**:
+  ```json
+  {
+    "team_name": "CyberKnights",
+    "members": [
+      {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "9876543211"
+      },
+      {
+        "name": "Alice Smith",
+        "email": "alice.smith@example.com",
+        "phone": "9876543212"
+      }
+    ]
+  }
+  ```
+- **Response**: `201 Created`
+  ```json
+  {
+    "success": true,
+    "message": "HackNova team registered successfully!",
+    "is_locked": true,
+    "team": {
+      "id": 1,
+      "team_name": "CyberKnights",
+      "leader_user_id": 1,
+      "created_at": "2026-10-18T12:30:00.000Z",
+      "members": [
+        { "id": 1, "user_name": "Jane Leader", "email": "jane@example.com", "phone": "9876543210", "role": "leader" },
+        { "id": 2, "user_name": "John Doe", "email": "john.doe@example.com", "phone": "9876543211", "role": "member" },
+        { "id": 3, "user_name": "Alice Smith", "email": "alice.smith@example.com", "phone": "9876543212", "role": "member" }
+      ]
+    }
+  }
+  ```
+
+#### 3. Check Team Lock Status
+- **Method & Path**: `GET /hacknova/team/status` (or `GET /api/hacknova/team/status`)
+- **Auth**: `Authorization: Bearer {{token}}`
+- **Response**: `200 OK`
+  ```json
+  {
+    "isRegistered": true,
+    "is_locked": true,
+    "team": { ... }
+  }
+  ```
+
+---
+
 ### Event 3: Freeze The Second (EMS ID: 10)
 > **Theme**: Photography Contest  
 > **Accepted Files**: Strictly **JPG, JPEG, PNG** images, max size **35 MB**.  

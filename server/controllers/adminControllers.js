@@ -116,7 +116,7 @@ const getcsv = async (req, res) => {
 
         if (!eventParam) {
             return res.status(400).json({
-                error: "Event parameter is required. E.g. /admin/csv/hacknova, /admin/csv/freeze, /admin/csv/innowave, /admin/csv/rootcause, or /admin/csv/all",
+                error: "Event parameter is required. E.g. /admin/csv/hacknova, /admin/csv/hacknova-teams, /admin/csv/freeze, /admin/csv/innowave, /admin/csv/rootcause, or /admin/csv/all",
             });
         }
 
@@ -849,6 +849,9 @@ const getCsvPortal = async (req, res) => {
                     <button id="closeAllBtn" class="btn-global btn-close-all" title="Disable submissions for all events">
                         <span>🔴</span> Close All (NO)
                     </button>
+                    <a id="hacknovaTeamsDownloadBtn" href="/admin/csv/hacknova-teams" class="btn-global" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); text-decoration: none;" download>
+                        <span>👥</span> HackNova Squads CSV
+                    </a>
                     <a id="masterDownloadBtn" href="/admin/csv/all" class="btn-master" download>
                         <span>📊</span> Master CSV (All Events)
                     </a>
@@ -973,14 +976,20 @@ const getCsvPortal = async (req, res) => {
                 activePortalsDisplay.style.color = "var(--warning)";
             }
 
+            const hacknovaTeamsDownloadBtn = document.getElementById("hacknovaTeamsDownloadBtn");
+            if (hacknovaTeamsDownloadBtn) {
+                hacknovaTeamsDownloadBtn.href = "/admin/csv/hacknova-teams?token=" + encodeURIComponent(token);
+            }
             masterDownloadBtn.href = "/admin/csv/all?token=" + encodeURIComponent(token);
 
             eventCardsGrid.innerHTML = currentEvents.map(ev => {
                 const isActive = Boolean(ev.isSubmissionActive);
+                const cardKey = ev.key || ev.emsId;
+                const displayId = ev.displayEmsId || ev.emsId;
                 return \`
-                    <div class="card \${isActive ? 'is-active' : 'is-closed'}" id="card-\${ev.emsId}">
+                    <div class="card \${isActive ? 'is-active' : 'is-closed'}" id="card-\${cardKey}">
                         <div class="card-header">
-                            <span class="badge">EMS ID: \${ev.emsId}</span>
+                            <span class="badge">EMS ID: \${displayId}</span>
                             <span class="count-pill">\${ev.submissionsCount} submissions</span>
                         </div>
                         <h3>\${ev.name}</h3>
@@ -999,14 +1008,14 @@ const getCsvPortal = async (req, res) => {
                             <div class="segmented-switch">
                                 <button type="button" 
                                     class="seg-btn seg-yes \${isActive ? 'active' : ''}" 
-                                    onclick="setEventSubmissionStatus(\${ev.emsId}, true, '\${ev.name}')"
-                                    id="btn-yes-\${ev.emsId}">
+                                    onclick="setEventSubmissionStatus(\${ev.emsId}, true, '\${ev.name}', '\${cardKey}')"
+                                    id="btn-yes-\${cardKey}">
                                     <span>✓</span> YES (Active)
                                 </button>
                                 <button type="button" 
                                     class="seg-btn seg-no \${!isActive ? 'active' : ''}" 
-                                    onclick="setEventSubmissionStatus(\${ev.emsId}, false, '\${ev.name}')"
-                                    id="btn-no-\${ev.emsId}">
+                                    onclick="setEventSubmissionStatus(\${ev.emsId}, false, '\${ev.name}', '\${cardKey}')"
+                                    id="btn-no-\${cardKey}">
                                     <span>✕</span> NO (Closed)
                                 </button>
                             </div>
@@ -1027,7 +1036,7 @@ const getCsvPortal = async (req, res) => {
         }
 
         // Toggle Single Event Submission Status (YES / NO)
-        window.setEventSubmissionStatus = async function(eventId, newStatus, eventName) {
+        window.setEventSubmissionStatus = async function(eventId, newStatus, eventName, eventKey) {
             const token = localStorage.getItem(TOKEN_KEY);
             if (!token) {
                 showToast("Please sign in first.", "error");
@@ -1035,8 +1044,9 @@ const getCsvPortal = async (req, res) => {
                 return;
             }
 
-            const btnYes = document.getElementById("btn-yes-" + eventId);
-            const btnNo = document.getElementById("btn-no-" + eventId);
+            const btnKey = eventKey || eventId;
+            const btnYes = document.getElementById("btn-yes-" + btnKey);
+            const btnNo = document.getElementById("btn-no-" + btnKey);
             if (btnYes) btnYes.disabled = true;
             if (btnNo) btnNo.disabled = true;
 
@@ -1055,8 +1065,8 @@ const getCsvPortal = async (req, res) => {
                     throw new Error(data.message || data.error || "Failed to update submission status");
                 }
 
-                // Update in local state
-                const ev = currentEvents.find(e => e.emsId === eventId);
+                // Update in local state ONLY for this clicked event
+                const ev = currentEvents.find(e => (eventKey && e.key === eventKey) || e.emsId === eventId);
                 if (ev) {
                     ev.isSubmissionActive = newStatus;
                     ev.eventStatus = newStatus;
@@ -1065,9 +1075,9 @@ const getCsvPortal = async (req, res) => {
                 renderDashboard(token);
 
                 if (newStatus) {
-                    showToast("✓ " + eventName + ": Submissions are now ACTIVE (Open)!", "success");
+                    showToast("✓ " + eventName + ": Status is now ACTIVE (Open)!", "success");
                 } else {
-                    showToast("🛑 " + eventName + ": Submissions are now CLOSED. Participants cannot submit.", "warning");
+                    showToast("🛑 " + eventName + ": Status is now CLOSED.", "warning");
                 }
 
             } catch (err) {

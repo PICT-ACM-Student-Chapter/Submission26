@@ -95,6 +95,124 @@ const EVENT_SPECS = {
     }),
   },
 
+  hacknova_teams: {
+    eventName: "HackNova Squad Registrations",
+    emsId: 200,
+    displayEmsId: 20,
+    table: "hacknova_teams",
+    aliases: [
+      "hacknova-teams",
+      "hacknova_teams",
+      "hacknova-team",
+      "hacknova_team",
+      "hacknovateams",
+      "200",
+      "teams",
+      "squads",
+    ],
+    query: `
+      SELECT 
+        t.id AS team_id,
+        t.team_name,
+        t.created_at AS team_created_at,
+        u.first_name AS leader_first_name,
+        u.last_name AS leader_last_name,
+        u.email AS leader_email,
+        u.mobile_number AS leader_phone,
+        u.college AS leader_college,
+        u.year AS leader_year,
+        u.ems_id AS leader_ems_id,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', m.id,
+              'name', m.user_name,
+              'email', m.email,
+              'phone', m.phone,
+              'role', m.role
+            ) ORDER BY m.id ASC
+          ) FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS members
+      FROM hacknova_teams t
+      JOIN users u ON t.leader_user_id = u.id
+      LEFT JOIN hacknova_team_members m ON t.id = m.team_id
+      GROUP BY t.id, t.team_name, t.created_at, u.id, u.first_name, u.last_name, u.email, u.mobile_number, u.college, u.year, u.ems_id
+      ORDER BY t.created_at DESC;
+    `,
+    fields: [
+      { label: "Team ID", value: "team_id" },
+      { label: "Team Name", value: "team_name" },
+      { label: "Total Members", value: "total_members" },
+      { label: "Leader Name", value: "leader_name" },
+      { label: "Leader Email", value: "leader_email" },
+      { label: "Leader Phone", value: "leader_phone" },
+      { label: "Leader College", value: "leader_college" },
+      { label: "Leader Year", value: "leader_year" },
+      { label: "Leader EMS ID", value: "leader_ems_id" },
+      { label: "Member 2 Name", value: "member2_name" },
+      { label: "Member 2 Email", value: "member2_email" },
+      { label: "Member 2 Phone", value: "member2_phone" },
+      { label: "Member 3 Name", value: "member3_name" },
+      { label: "Member 3 Email", value: "member3_email" },
+      { label: "Member 3 Phone", value: "member3_phone" },
+      { label: "Member 4 Name", value: "member4_name" },
+      { label: "Member 4 Email", value: "member4_email" },
+      { label: "Member 4 Phone", value: "member4_phone" },
+      { label: "Full Squad Roster", value: "roster_summary" },
+      { label: "Registered At (IST)", value: "created_at_ist" },
+    ],
+    mapRow: (row) => {
+      let members = [];
+      try {
+        members = Array.isArray(row.members)
+          ? row.members
+          : typeof row.members === "string"
+          ? JSON.parse(row.members)
+          : [];
+      } catch (e) {
+        members = [];
+      }
+
+      // Filter out leader row so members 2, 3, 4 are accurately mapped
+      const otherMembers = members.filter(
+        (m) => m.role !== "leader" && m.email !== row.leader_email
+      );
+      const m2 = otherMembers[0] || {};
+      const m3 = otherMembers[1] || {};
+      const m4 = otherMembers[2] || {};
+      const leaderName = `${row.leader_first_name || ""} ${row.leader_last_name || ""}`.trim();
+      const allRoster = [
+        `Leader: ${leaderName} (${row.leader_email})`,
+        m2.name ? `Member 2: ${m2.name} (${m2.email})` : null,
+        m3.name ? `Member 3: ${m3.name} (${m3.email})` : null,
+        m4.name ? `Member 4: ${m4.name} (${m4.email})` : null,
+      ].filter(Boolean).join(" | ");
+
+      return {
+        team_id: row.team_id,
+        team_name: row.team_name,
+        total_members: 1 + otherMembers.length,
+        leader_name: leaderName,
+        leader_email: row.leader_email || "",
+        leader_phone: row.leader_phone || "",
+        leader_college: row.leader_college || "",
+        leader_year: row.leader_year || "",
+        leader_ems_id: row.leader_ems_id || "N/A",
+        member2_name: m2.name || "",
+        member2_email: m2.email || "",
+        member2_phone: m2.phone || "",
+        member3_name: m3.name || "",
+        member3_email: m3.email || "",
+        member3_phone: m3.phone || "",
+        member4_name: m4.name || "",
+        member4_email: m4.email || "",
+        member4_phone: m4.phone || "",
+        roster_summary: allRoster,
+        created_at_ist: formatISTDate(row.team_created_at),
+      };
+    },
+  },
+
   freeze: {
     eventName: "Freeze the Second",
     emsId: 10,
@@ -304,9 +422,13 @@ function resolveEventSpec(eventIdentifier) {
   if (!eventIdentifier) return null;
   const clean = String(eventIdentifier).trim().toLowerCase().replace(/^\//, "");
 
+  if (EVENT_SPECS[clean]) {
+    return EVENT_SPECS[clean];
+  }
+
   for (const key of Object.keys(EVENT_SPECS)) {
     const spec = EVENT_SPECS[key];
-    if (key === clean || spec.aliases.includes(clean)) {
+    if (key === clean || (spec.aliases && spec.aliases.includes(clean))) {
       return spec;
     }
   }
@@ -368,6 +490,12 @@ async function generateMasterAllEventsCsv() {
         secondaryUrl = r.github_url || r.live_demo_url || "N/A";
         titleOrTeam = `${r.team_name ? r.team_name + " - " : ""}${r.project_title || "N/A"}`;
         details = r.notes || "";
+      } else if (key === "hacknova_teams") {
+        const memCount = Array.isArray(r.members) ? r.members.length : 1;
+        primaryUrl = `Squad (${memCount} members)`;
+        secondaryUrl = `Leader Phone: ${r.leader_phone || "N/A"}`;
+        titleOrTeam = r.team_name || "N/A";
+        details = `Leader: ${r.leader_first_name || ""} ${r.leader_last_name || ""} (${r.leader_email || ""})`;
       } else if (key === "freeze") {
         primaryUrl = r.photo_url || "N/A";
         secondaryUrl = r.camera_device || "N/A";
@@ -387,20 +515,20 @@ async function generateMasterAllEventsCsv() {
 
       allSubmissions.push({
         event_name: spec.eventName,
-        submission_id: r.submission_id,
-        ems_id: r.ems_id || "N/A",
-        participant_name: `${r.first_name || ""} ${r.last_name || ""}`.trim(),
-        email: r.email || "",
-        mobile_number: r.mobile_number || "",
-        college: r.college || "",
-        year: r.year || "",
+        submission_id: r.submission_id || r.team_id,
+        ems_id: r.ems_id || r.leader_ems_id || "N/A",
+        participant_name: `${r.first_name || r.leader_first_name || ""} ${r.last_name || r.leader_last_name || ""}`.trim(),
+        email: r.email || r.leader_email || "",
+        mobile_number: r.mobile_number || r.leader_phone || "",
+        college: r.college || r.leader_college || "",
+        year: r.year || r.leader_year || "",
         title_or_team: titleOrTeam,
         primary_submission_url: primaryUrl,
         secondary_url: secondaryUrl,
         notes_details: details,
-        active_submission: r.active_submission ? "Yes" : "No",
-        created_at_ist: formatISTDate(r.created_at),
-        raw_created_at: r.created_at,
+        active_submission: r.active_submission !== undefined ? (r.active_submission ? "Yes" : "No") : "Yes",
+        created_at_ist: formatISTDate(r.created_at || r.team_created_at),
+        raw_created_at: r.created_at || r.team_created_at,
       });
     }
   }
@@ -452,7 +580,7 @@ async function getEventsSummary() {
     
     // Fetch live submission acceptance status from submission_event
     let isSubmissionActive = true;
-    let eventRoute = `/${key}`;
+    let eventRoute = key === "hacknova_teams" ? "/hacknova-team" : `/${key}`;
     try {
       const statusRes = await client.query(
         `SELECT event_status, event_route FROM submission_event WHERE event_id = $1 LIMIT 1;`,
@@ -472,13 +600,14 @@ async function getEventsSummary() {
       key,
       name: spec.eventName,
       emsId: spec.emsId,
+      displayEmsId: spec.displayEmsId || spec.emsId,
       table: spec.table,
       submissionsCount: parseInt(res.rows[0].count, 10),
       isSubmissionActive,
       eventStatus: isSubmissionActive,
       eventRoute,
       downloadPath: `/admin/csv/${key}`,
-      directPath: `/${key}/csv`,
+      directPath: key === "hacknova_teams" ? "/hacknova/teams/csv" : `/${key}/csv`,
     });
   }
   return summary;
