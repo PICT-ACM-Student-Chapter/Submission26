@@ -31,12 +31,31 @@ const postHackNova = async (req, res) => {
       });
     }
 
-    // Check if entry already submitted
-    const query = "SELECT EXISTS (SELECT 1 FROM hacknova WHERE fk_user = $1)";
-    const result = await client.query(query, [req.user.id]);
+    // Verify that the squad/team is registered in HackNova Squad Registration (hacknova_teams)
+    const teamCheck = await client.query(
+      `SELECT ht.* FROM hacknova_teams ht 
+       WHERE ht.leader_user_id = $1 
+          OR ht.id IN (SELECT team_id FROM hacknova_team_members WHERE LOWER(email) = LOWER($2))
+       LIMIT 1`,
+      [req.user.id, (req.user.email || "").trim()]
+    );
+
+    if (teamCheck.rowCount === 0) {
+      return res.status(403).json({
+        error: "Squad registration required: You must register your squad on the HackNova Team Registration page before project submission.",
+        requires_team_registration: true,
+      });
+    }
+
+    const registeredTeam = teamCheck.rows[0];
+    const finalTeamName = (registeredTeam.team_name || team_name || "").trim();
+
+    // Check if entry already submitted for this user or this registered squad
+    const query = "SELECT EXISTS (SELECT 1 FROM hacknova WHERE fk_user = $1 OR LOWER(team_name) = LOWER($2))";
+    const result = await client.query(query, [req.user.id, finalTeamName]);
     if (result.rows[0].exists) {
       return res.status(400).json({
-        error: "Entry already submitted for HackNova.",
+        error: "Entry already submitted for HackNova for this team.",
       });
     }
 
@@ -92,7 +111,7 @@ const postHackNova = async (req, res) => {
       RETURNING *;
     `;
     const response = await client.query(insertQuery, [
-      team_name || "",
+      finalTeamName || team_name || "",
       project_title || "HackNova Project",
       submission_file_url,
       github_url || "",
@@ -134,6 +153,21 @@ const uploadHackNovaFile = async (req, res) => {
       });
     }
 
+    // Verify squad registration before file upload
+    const teamCheck = await client.query(
+      `SELECT ht.id FROM hacknova_teams ht 
+       WHERE ht.leader_user_id = $1 
+          OR ht.id IN (SELECT team_id FROM hacknova_team_members WHERE LOWER(email) = LOWER($2))
+       LIMIT 1`,
+      [req.user.id, (req.user.email || "").trim()]
+    );
+    if (teamCheck.rowCount === 0) {
+      return res.status(403).json({
+        error: "Squad registration required: You must register your squad before uploading submission files.",
+        requires_team_registration: true,
+      });
+    }
+
     if (!req.file && (!req.files || req.files.length === 0)) {
       return res.status(400).json({ error: "No file provided for upload." });
     }
@@ -157,9 +191,22 @@ const uploadHackNovaFile = async (req, res) => {
 const getHackNova = async (req, res) => {
   try {
     const activeCheck = await isSubmissionActive(emsIds.hacknova);
+    // Look up user registered team (leader or member)
+    const teamRes = await client.query(
+      `SELECT ht.team_name FROM hacknova_teams ht
+       LEFT JOIN hacknova_team_members htm ON htm.team_id = ht.id
+       WHERE ht.leader_user_id = $1 OR LOWER(htm.email) = LOWER($2)
+       LIMIT 1`,
+      [req.user.id, (req.user.email || "").trim()]
+    );
+    const registeredTeamName = teamRes.rows[0]?.team_name || null;
+
     const response = await client.query(
-      "SELECT * FROM hacknova WHERE fk_user = $1",
-      [req.user.id]
+      `SELECT * FROM hacknova 
+       WHERE fk_user = $1 
+          OR ($2::VARCHAR IS NOT NULL AND LOWER(team_name) = LOWER($2))
+       ORDER BY id DESC LIMIT 1`,
+      [req.user.id, registeredTeamName]
     );
 
     const submission = response.rowCount > 0 ? {
@@ -174,6 +221,8 @@ const getHackNova = async (req, res) => {
       is_submission_active: activeCheck.active,
       event_status: activeCheck.active,
       event_name: activeCheck.eventName,
+      is_team_registered: Boolean(registeredTeamName),
+      registered_team_name: registeredTeamName,
     });
   } catch (error) {
     console.error("Error in getHackNova:", error);

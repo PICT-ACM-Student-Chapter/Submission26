@@ -86,10 +86,14 @@ const getHackNovaTeamMe = async (req, res) => {
       ems_id: req.user.ems_id || null,
     };
 
-    // Check if leader has already registered a team
+    // Check if user is leader or member of a registered team
     const teamRes = await client.query(
-      "SELECT * FROM hacknova_teams WHERE leader_user_id = $1",
-      [req.user.id]
+      `SELECT ht.* FROM hacknova_teams ht
+       LEFT JOIN hacknova_team_members htm ON htm.team_id = ht.id
+       WHERE ht.leader_user_id = $1 OR LOWER(htm.email) = LOWER($2)
+       GROUP BY ht.id
+       LIMIT 1`,
+      [req.user.id, (req.user.email || "").trim()]
     );
 
     let team = null;
@@ -137,8 +141,12 @@ const getHackNovaTeamMe = async (req, res) => {
 const getHackNovaTeamStatus = async (req, res) => {
   try {
     const teamRes = await client.query(
-      "SELECT * FROM hacknova_teams WHERE leader_user_id = $1",
-      [req.user.id]
+      `SELECT ht.* FROM hacknova_teams ht
+       LEFT JOIN hacknova_team_members htm ON htm.team_id = ht.id
+       WHERE ht.leader_user_id = $1 OR LOWER(htm.email) = LOWER($2)
+       GROUP BY ht.id
+       LIMIT 1`,
+      [req.user.id, (req.user.email || "").trim()]
     );
 
     if (teamRes.rowCount === 0) {
