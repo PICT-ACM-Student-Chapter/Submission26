@@ -347,6 +347,122 @@ const EVENT_SPECS = {
     }),
   },
 
+  innowave_teams: {
+    eventName: "InnoWave Team Registrations",
+    emsId: 201,
+    displayEmsId: 12,
+    table: "innowave_teams",
+    aliases: [
+      "innowave-teams",
+      "innowave_teams",
+      "innowave-team",
+      "innowave_team",
+      "innowaveteams",
+      "201",
+    ],
+    query: `
+      SELECT 
+        t.id AS team_id,
+        t.team_name,
+        t.created_at AS team_created_at,
+        u.first_name AS leader_first_name,
+        u.last_name AS leader_last_name,
+        u.email AS leader_email,
+        u.mobile_number AS leader_phone,
+        u.college AS leader_college,
+        u.year AS leader_year,
+        u.ems_id AS leader_ems_id,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', m.id,
+              'name', m.user_name,
+              'email', m.email,
+              'phone', m.phone,
+              'role', m.role
+            ) ORDER BY m.id ASC
+          ) FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS members
+      FROM innowave_teams t
+      JOIN users u ON t.leader_user_id = u.id
+      LEFT JOIN innowave_team_members m ON t.id = m.team_id
+      GROUP BY t.id, t.team_name, t.created_at, u.id, u.first_name, u.last_name, u.email, u.mobile_number, u.college, u.year, u.ems_id
+      ORDER BY t.created_at DESC;
+    `,
+    fields: [
+      { label: "Team ID", value: "team_id" },
+      { label: "Team Name", value: "team_name" },
+      { label: "Total Members", value: "total_members" },
+      { label: "Leader Name", value: "leader_name" },
+      { label: "Leader Email", value: "leader_email" },
+      { label: "Leader Phone", value: "leader_phone" },
+      { label: "Leader College", value: "leader_college" },
+      { label: "Leader Year", value: "leader_year" },
+      { label: "Leader EMS ID", value: "leader_ems_id" },
+      { label: "Member 2 Name", value: "member2_name" },
+      { label: "Member 2 Email", value: "member2_email" },
+      { label: "Member 2 Phone", value: "member2_phone" },
+      { label: "Member 3 Name", value: "member3_name" },
+      { label: "Member 3 Email", value: "member3_email" },
+      { label: "Member 3 Phone", value: "member3_phone" },
+      { label: "Member 4 Name", value: "member4_name" },
+      { label: "Member 4 Email", value: "member4_email" },
+      { label: "Member 4 Phone", value: "member4_phone" },
+      { label: "Full Team Roster", value: "roster_summary" },
+      { label: "Registered At (IST)", value: "created_at_ist" },
+    ],
+    mapRow: (row) => {
+      let members = [];
+      try {
+        members = Array.isArray(row.members)
+          ? row.members
+          : typeof row.members === "string"
+          ? JSON.parse(row.members)
+          : [];
+      } catch (e) {
+        members = [];
+      }
+
+      // Filter out leader row so members 2, 3, 4 are accurately mapped
+      const otherMembers = members.filter(
+        (m) => m.role !== "leader" && m.email !== row.leader_email
+      );
+      const m2 = otherMembers[0] || {};
+      const m3 = otherMembers[1] || {};
+      const m4 = otherMembers[2] || {};
+      const leaderName = `${row.leader_first_name || ""} ${row.leader_last_name || ""}`.trim();
+      const allRoster = [
+        `Leader: ${leaderName} (${row.leader_email})`,
+        m2.name ? `Member 2: ${m2.name} (${m2.email})` : null,
+        m3.name ? `Member 3: ${m3.name} (${m3.email})` : null,
+        m4.name ? `Member 4: ${m4.name} (${m4.email})` : null,
+      ].filter(Boolean).join(" | ");
+
+      return {
+        team_id: row.team_id,
+        team_name: row.team_name,
+        total_members: 1 + otherMembers.length,
+        leader_name: leaderName,
+        leader_email: row.leader_email || "",
+        leader_phone: row.leader_phone || "",
+        leader_college: row.leader_college || "",
+        leader_year: row.leader_year || "",
+        leader_ems_id: row.leader_ems_id || "N/A",
+        member2_name: m2.name || "",
+        member2_email: m2.email || "",
+        member2_phone: m2.phone || "",
+        member3_name: m3.name || "",
+        member3_email: m3.email || "",
+        member3_phone: m3.phone || "",
+        member4_name: m4.name || "",
+        member4_email: m4.email || "",
+        member4_phone: m4.phone || "",
+        roster_summary: allRoster,
+        created_at_ist: formatISTDate(row.team_created_at),
+      };
+    },
+  },
+
   rootcause: {
     eventName: "Root Cause",
     emsId: 21,
@@ -506,6 +622,12 @@ async function generateMasterAllEventsCsv() {
         secondaryUrl = r.video_pitch_url || "N/A";
         titleOrTeam = `${r.team_name || "N/A"} (${r.track || "General"})`;
         details = r.changelog || "";
+      } else if (key === "innowave_teams") {
+        const memCount = Array.isArray(r.members) ? r.members.length : 1;
+        primaryUrl = `Team (${memCount} members)`;
+        secondaryUrl = `Leader Phone: ${r.leader_phone || "N/A"}`;
+        titleOrTeam = r.team_name || "N/A";
+        details = `Leader: ${r.leader_first_name || ""} ${r.leader_last_name || ""} (${r.leader_email || ""})`;
       } else if (key === "rootcause") {
         primaryUrl = r.github_repo_url || r.submission_file_url || "N/A";
         secondaryUrl = r.github_pr_url || "N/A";
@@ -580,7 +702,12 @@ async function getEventsSummary() {
     
     // Fetch live submission acceptance status from submission_event
     let isSubmissionActive = true;
-    let eventRoute = key === "hacknova_teams" ? "/hacknova-team" : `/${key}`;
+    let eventRoute =
+      key === "hacknova_teams"
+        ? "/hacknova-team"
+        : key === "innowave_teams"
+        ? "/innowave-team"
+        : `/${key}`;
     try {
       const statusRes = await client.query(
         `SELECT event_status, event_route FROM submission_event WHERE event_id = $1 LIMIT 1;`,
@@ -607,7 +734,12 @@ async function getEventsSummary() {
       eventStatus: isSubmissionActive,
       eventRoute,
       downloadPath: `/admin/csv/${key}`,
-      directPath: key === "hacknova_teams" ? "/hacknova/teams/csv" : `/${key}/csv`,
+      directPath:
+        key === "hacknova_teams"
+          ? "/hacknova/teams/csv"
+          : key === "innowave_teams"
+          ? "/innowave/teams/csv"
+          : `/${key}/csv`,
     });
   }
   return summary;

@@ -93,17 +93,44 @@ pool.query("SELECT NOW()", (err, res) => {
       CREATE INDEX IF NOT EXISTS idx_hacknova_team_members_team_id ON hacknova_team_members(team_id);
       CREATE INDEX IF NOT EXISTS idx_hacknova_teams_leader ON hacknova_teams(leader_user_id);
 
-      -- Ensure submission_event can hold distinct portal configs (e.g. HackNova Squads id 200)
+      -- InnoWave Team Registration Tables
+      CREATE TABLE IF NOT EXISTS innowave_teams (
+        id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        team_name VARCHAR(255) NOT NULL,
+        leader_user_id INT NOT NULL UNIQUE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        CONSTRAINT fk_innowave_leader FOREIGN KEY(leader_user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS innowave_team_members (
+        id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        team_id INT NOT NULL,
+        user_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(100),
+        role VARCHAR(50) NOT NULL DEFAULT 'member',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        CONSTRAINT fk_innowave_team FOREIGN KEY(team_id) REFERENCES innowave_teams(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_innowave_team_members_team_id ON innowave_team_members(team_id);
+      CREATE INDEX IF NOT EXISTS idx_innowave_teams_leader ON innowave_teams(leader_user_id);
+
+      -- Ensure submission_event can hold distinct portal configs (e.g. HackNova Squads id 200, InnoWave Teams id 201)
       ALTER TABLE submission_event DROP CONSTRAINT IF EXISTS fk_event;
       INSERT INTO submission_event (event_id, event_name, event_route, event_status)
-      VALUES (200, 'HACKNOVA SQUAD REGISTRATIONS', '/hacknova-team', true)
+      VALUES
+        (200, 'HACKNOVA SQUAD REGISTRATIONS', '/hacknova-team', true),
+        (201, 'INNOWAVE TEAM REGISTRATIONS', '/innowave-team', true)
       ON CONFLICT (event_id) DO NOTHING;
     `, (migErr) => {
       if (migErr) {
         console.warn("Schema check warning:", migErr.message);
       } else {
         console.log("✓ Event schema columns up-to-date for all 4 competitions (Freeze, Innowave, HackNova, Root Cause).");
-        console.log("✓ HackNova team registration tables up-to-date.");
+        console.log("✓ HackNova & InnoWave team registration tables up-to-date.");
+        console.log("✓ Team registration portals seeded (HackNova Squads 200, InnoWave Teams 201).");
       }
     });
   }

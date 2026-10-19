@@ -24,6 +24,11 @@ const masterEvents = [
     ems_id: 200,
     name: "HackNova Squad Registrations",
   },
+  {
+    id: 6,
+    ems_id: 201,
+    name: "InnoWave Team Registrations",
+  },
 ];
 
 const emsIds = {
@@ -34,6 +39,9 @@ const emsIds = {
   hacknova_teams: 200,
   hacknovaTeams: 200,
   hacknovateams: 200,
+  innowave_teams: 201,
+  innowaveTeams: 201,
+  innowaveteams: 201,
 };
 
 module.exports = { masterEvents, emsIds };

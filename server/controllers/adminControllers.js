@@ -849,9 +849,12 @@ const getCsvPortal = async (req, res) => {
                     <button id="closeAllBtn" class="btn-global btn-close-all" title="Disable submissions for all events">
                         <span>🔴</span> Close All (NO)
                     </button>
-                    <a id="hacknovaTeamsDownloadBtn" href="/admin/csv/hacknova-teams" class="btn-global" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); text-decoration: none;" download>
-                        <span>👥</span> HackNova Squads CSV
-                    </a>
+                     <a id="innowaveTeamsDownloadBtn" href="/admin/csv/innowave-teams" class="btn-global" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); text-decoration: none;" download>
+                         <span>👥</span> InnoWave Teams CSV
+                     </a>
+                     <a id="hacknovaTeamsDownloadBtn" href="/admin/csv/hacknova-teams" class="btn-global" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); text-decoration: none;" download>
+                         <span>👥</span> HackNova Squads CSV
+                     </a>
                     <a id="masterDownloadBtn" href="/admin/csv/all" class="btn-master" download>
                         <span>📊</span> Master CSV (All Events)
                     </a>
@@ -913,6 +916,7 @@ const getCsvPortal = async (req, res) => {
 
         async function init() {
             if (hacknovaTeamsDownloadBtn) hacknovaTeamsDownloadBtn.href = BASE_PATH + "/admin/csv/hacknova-teams";
+            if (innowaveTeamsDownloadBtn) innowaveTeamsDownloadBtn.href = BASE_PATH + "/admin/csv/innowave-teams";
             if (masterDownloadBtn) masterDownloadBtn.href = BASE_PATH + "/admin/csv/all";
             const urlParams = new URLSearchParams(window.location.search);
             const urlToken = urlParams.get("token") || urlParams.get("admin_token");
@@ -980,8 +984,10 @@ const getCsvPortal = async (req, res) => {
             }
 
             const hacknovaTeamsDownloadBtn = document.getElementById("hacknovaTeamsDownloadBtn");
+        const innowaveTeamsDownloadBtn = document.getElementById("innowaveTeamsDownloadBtn");
             if (hacknovaTeamsDownloadBtn) {
                 hacknovaTeamsDownloadBtn.href = BASE_PATH + "/admin/csv/hacknova-teams?token=" + encodeURIComponent(token);
+            if (innowaveTeamsDownloadBtn) innowaveTeamsDownloadBtn.href = BASE_PATH + "/admin/csv/innowave-teams?token=" + encodeURIComponent(token);
             }
             masterDownloadBtn.href = BASE_PATH + "/admin/csv/all?token=" + encodeURIComponent(token);
 
