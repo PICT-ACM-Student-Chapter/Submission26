@@ -27,8 +27,12 @@ async function testAll() {
       console.log(`✓ Using existing test user (ID: ${userId})`);
     }
 
-    // 2. Generate test JWT
-    const token = jwt.sign({ id: userId }, process.env.TOKEN_SECRET || "f3045686f75f6063e3fa79be41");
+    // 2. Generate test JWT (1 day expiry)
+    const token = jwt.sign(
+      { id: userId },
+      process.env.TOKEN_SECRET || "f3045686f75f6063e3fa79be41",
+      { expiresIn: "1d" }
+    );
     await client.query("DELETE FROM user_token WHERE fk_user = $1", [userId]);
     await client.query(
       "INSERT INTO user_token (token, is_valid, ems_token, fk_user, created_at, updated_at) VALUES ($1, true, 'mock_ems_token', $2, NOW(), NOW())",

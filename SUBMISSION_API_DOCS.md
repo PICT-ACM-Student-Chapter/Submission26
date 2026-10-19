@@ -31,15 +31,17 @@ The Submission Backend delegates user authentication to the EMS API via `POST ht
    - Upserts the participant in the local `users` table.
    - Fetches registered events from EMS (`GET /user_events/`).
    - Syncs matching active events (`10`, `12`, `20`, `21`) into `user_events`.
-   - Generates a Submission JWT token.
+   - Generates a Submission JWT session token (valid for 1 Day / 24 hours).
 3. **Protected Requests**: For all user endpoints, pass:
    ```http
    Authorization: Bearer <token>
    ```
+   Tokens remain valid for 24 hours from issuance.
 4. **Admin Requests**: For admin management & CSV export, pass:
    ```http
    Authorization: Bearer <adminToken>
    ```
+   Admin session tokens also remain valid for 24 hours from issuance.
 
 ---
 

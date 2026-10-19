@@ -196,10 +196,23 @@ app.get("/", async (req, res) => {
 });
 
 // ---------------------------
-// Cron job example
+// Periodic cleanup of expired session tokens (older than 1 day)
 // ---------------------------
-cron.schedule("* * * * *", async () => {
-  console.log("Cron job is running");
+cron.schedule("0 * * * *", async () => {
+  try {
+    const expiredUserTokens = await pool.query(
+      "DELETE FROM user_token WHERE created_at < NOW() - INTERVAL '1 day'"
+    );
+    const expiredAdminTokens = await pool.query(
+      "DELETE FROM admin_token WHERE created_at < NOW() - INTERVAL '1 day'"
+    );
+    const totalDeleted = (expiredUserTokens.rowCount || 0) + (expiredAdminTokens.rowCount || 0);
+    if (totalDeleted > 0) {
+      console.log(`Cleaned up ${totalDeleted} expired session tokens (${expiredUserTokens.rowCount || 0} user, ${expiredAdminTokens.rowCount || 0} admin)`);
+    }
+  } catch (err) {
+    console.error("Error during scheduled session token cleanup:", err.message);
+  }
 });
 
 // ---------------------------
