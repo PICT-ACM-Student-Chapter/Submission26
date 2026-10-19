@@ -3,7 +3,7 @@ const https = require("https");
 const client = require("../db/connect");
 const { masterEvents } = require("../models/master");
 const format = require("pg-format");
-const { getSubmissionEvents } = require("../controllers/SubmissionEventController");
+const { getAllSubmissionEventIds } = require("../controllers/SubmissionEventController");
 
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
@@ -145,11 +145,11 @@ async function FetchUserSubmissionEvents(ems_token, userId) {
     // Fetching events from EMS
     const response = await axios(options);
     let ems_events = response?.data?.events || [];
-    // Fetching submission events (from another service or DB)
-    const submission_events = await getSubmissionEvents();
+    // Fetching submission events (ALL events, regardless of submission open/closed status)
+    const submission_events = await getAllSubmissionEventIds();
 
     // Log the submission events and EMS events for debugging
-    console.log("Submission Events", submission_events);
+    console.log("All Submission Event IDs (regardless of status)", submission_events);
     console.log("EMS Events", ems_events.map(event => event.id));
 
     // Comparing and filtering matching events

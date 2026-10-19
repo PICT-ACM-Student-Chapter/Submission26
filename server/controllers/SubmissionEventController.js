@@ -200,6 +200,18 @@ const getSubmissionEvents = async () => {
     }
 };
 
+// Returns ALL event IDs regardless of submission status (used for event visibility)
+const getAllSubmissionEventIds = async () => {
+    try {
+        const query = `SELECT event_id FROM submission_event;`;
+        const result = await client.query(query);
+        return result.rows.map(row => row.event_id);
+    } catch (error) {
+        console.error("Error fetching all submission event ids:", error);
+        throw new Error("Internal server error!");
+    }
+};
+
 const getAllSubmissionEvents = async (req, res) => {
     try {
         const query = `SELECT * FROM submission_event ORDER BY event_id ASC;`;
@@ -248,6 +260,7 @@ module.exports = {
     updateAllSubmissionEvents,
     deleteSubmissionEvent,
     getSubmissionEvents,
+    getAllSubmissionEventIds,
     getAllSubmissionEvents,
     FindStatus,
 };
