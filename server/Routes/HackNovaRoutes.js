@@ -5,6 +5,8 @@ const {
   getHackNova,
   ResultHackNova,
   exportHackNovaCsv,
+  getAllowedHackNovaLeaders,
+  postAllowedHackNovaLeaders,
 } = require("../controllers/HackNovaController");
 const {
   getHackNovaTeamMe,
@@ -85,6 +87,10 @@ HackNovaRouter.get("/getresult", isAdminAuthenticated, ResultHackNova);
 HackNovaRouter.get("/csv", isAdminAuthenticated, exportHackNovaCsv);
 HackNovaRouter.get("/export-csv", isAdminAuthenticated, exportHackNovaCsv);
 HackNovaRouter.get("/download-csv", isAdminAuthenticated, exportHackNovaCsv);
+
+// Team Leader Whitelist access control for project submission
+HackNovaRouter.get("/allowed-leaders", isUserAuthenticated, getAllowedHackNovaLeaders);
+HackNovaRouter.post("/allowed-leaders", isAdminAuthenticated, postAllowedHackNovaLeaders);
 
 // HackNova Teams Admin Endpoints (CSV export & Result format for frontend admin)
 HackNovaRouter.get("/teams/csv", isAdminAuthenticated, async (req, res) => {

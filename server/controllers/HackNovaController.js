@@ -2,6 +2,22 @@ const client = require("../db/connect");
 const { emsIds } = require("../models/master");
 const { isSubmissionActive } = require("../middleware/checkSubmissionActive");
 
+// Auto-create hacknova_allowed_submissions table on startup
+(async () => {
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS hacknova_allowed_submissions (
+        id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        allowed_leader_ids INT[] NOT NULL DEFAULT '{}',
+        is_restricted BOOLEAN NOT NULL DEFAULT true,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+  } catch (err) {
+    console.warn("hacknova_allowed_submissions table init warning:", err.message);
+  }
+})();
+
 /**
  * HackNova Project Submission (Accepts S3 file zip, GitHub URL, Live Demo link)
  */
@@ -48,7 +64,40 @@ const postHackNova = async (req, res) => {
     }
 
     const registeredTeam = teamCheck.rows[0];
-    const finalTeamName = (registeredTeam.team_name || team_name || "").trim();
+    const finalTeamName = (registeredTeam.team_name || req.body.team_name || "").trim();
+
+    // Check if admin restricted project submissions to specific Team Leader IDs
+    const allowedCheck = await client.query(
+      "SELECT allowed_leader_ids, is_restricted FROM hacknova_allowed_submissions ORDER BY id DESC LIMIT 1"
+    );
+    if (allowedCheck.rowCount > 0 && allowedCheck.rows[0].is_restricted) {
+      const allowedIds = Array.isArray(allowedCheck.rows[0].allowed_leader_ids)
+        ? allowedCheck.rows[0].allowed_leader_ids.map(Number)
+        : [];
+
+      const leaderId = Number(registeredTeam.leader_user_id);
+      const teamId = Number(registeredTeam.id);
+      const userId = Number(req.user.id);
+
+      // Only the Team Leader is authorized to submit for the squad
+      if (userId !== leaderId) {
+        return res.status(403).json({
+          error: `Only the Team Leader (ID #${leaderId}) is authorized to submit project deliverables for "${finalTeamName}".`,
+          is_leader: false,
+          leader_id: leaderId,
+        });
+      }
+
+      // Check if team leader ID or team ID is in the approved whitelist
+      if (allowedIds.length > 0 && !allowedIds.includes(leaderId) && !allowedIds.includes(teamId)) {
+        return res.status(403).json({
+          error: `Submission Access Restricted: Team Leader ID #${leaderId} (Team #${teamId}) is not on the admin-approved shortlist to submit for HackNova.`,
+          not_shortlisted: true,
+          leader_id: leaderId,
+          team_id: teamId,
+        });
+      }
+    }
 
     // Check if entry already submitted for this user or this registered squad
     const query = "SELECT EXISTS (SELECT 1 FROM hacknova WHERE fk_user = $1 OR LOWER(team_name) = LOWER($2))";
@@ -155,7 +204,7 @@ const uploadHackNovaFile = async (req, res) => {
 
     // Verify squad registration before file upload
     const teamCheck = await client.query(
-      `SELECT ht.id FROM hacknova_teams ht 
+      `SELECT ht.* FROM hacknova_teams ht 
        WHERE ht.leader_user_id = $1 
           OR ht.id IN (SELECT team_id FROM hacknova_team_members WHERE LOWER(email) = LOWER($2))
        LIMIT 1`,
@@ -166,6 +215,35 @@ const uploadHackNovaFile = async (req, res) => {
         error: "Squad registration required: You must register your squad before uploading submission files.",
         requires_team_registration: true,
       });
+    }
+
+    const registeredTeam = teamCheck.rows[0];
+
+    // Check if admin restricted submissions to specific Team Leader IDs
+    const allowedCheck = await client.query(
+      "SELECT allowed_leader_ids, is_restricted FROM hacknova_allowed_submissions ORDER BY id DESC LIMIT 1"
+    );
+    if (allowedCheck.rowCount > 0 && allowedCheck.rows[0].is_restricted) {
+      const allowedIds = Array.isArray(allowedCheck.rows[0].allowed_leader_ids)
+        ? allowedCheck.rows[0].allowed_leader_ids.map(Number)
+        : [];
+      const leaderId = Number(registeredTeam.leader_user_id);
+      const teamId = Number(registeredTeam.id);
+      const userId = Number(req.user.id);
+
+      if (userId !== leaderId) {
+        return res.status(403).json({
+          error: `Only the Team Leader (ID #${leaderId}) is authorized to upload files for "${registeredTeam.team_name}".`,
+          is_leader: false,
+        });
+      }
+
+      if (allowedIds.length > 0 && !allowedIds.includes(leaderId) && !allowedIds.includes(teamId)) {
+        return res.status(403).json({
+          error: `Upload Access Restricted: Team Leader ID #${leaderId} is not approved by admin to submit files.`,
+          not_shortlisted: true,
+        });
+      }
     }
 
     if (!req.file && (!req.files || req.files.length === 0)) {
@@ -186,20 +264,21 @@ const uploadHackNovaFile = async (req, res) => {
 };
 
 /**
- * Get current user's HackNova submission
+ * Get current user's HackNova submission & submission applicability
  */
 const getHackNova = async (req, res) => {
   try {
     const activeCheck = await isSubmissionActive(emsIds.hacknova);
     // Look up user registered team (leader or member)
     const teamRes = await client.query(
-      `SELECT ht.team_name FROM hacknova_teams ht
+      `SELECT ht.id, ht.team_name, ht.leader_user_id FROM hacknova_teams ht
        LEFT JOIN hacknova_team_members htm ON htm.team_id = ht.id
        WHERE ht.leader_user_id = $1 OR LOWER(htm.email) = LOWER($2)
        LIMIT 1`,
       [req.user.id, (req.user.email || "").trim()]
     );
-    const registeredTeamName = teamRes.rows[0]?.team_name || null;
+    const registeredTeam = teamRes.rows[0] || null;
+    const registeredTeamName = registeredTeam?.team_name || null;
 
     const response = await client.query(
       `SELECT * FROM hacknova 
@@ -214,6 +293,35 @@ const getHackNova = async (req, res) => {
       ems_user_id: response.rows[0].ems_user_id || req.user.ems_id,
     } : null;
 
+    // Check if team leader is allowed
+    let is_submission_applicable = true;
+    let not_applicable_reason = "";
+    let leader_user_id = registeredTeam ? Number(registeredTeam.leader_user_id) : null;
+    let is_leader = leader_user_id ? Number(req.user.id) === leader_user_id : false;
+    let allowed_leader_ids = [];
+    let is_restricted = false;
+
+    const allowedCheck = await client.query(
+      "SELECT allowed_leader_ids, is_restricted FROM hacknova_allowed_submissions ORDER BY id DESC LIMIT 1"
+    );
+    if (allowedCheck.rowCount > 0 && allowedCheck.rows[0].is_restricted) {
+      is_restricted = true;
+      allowed_leader_ids = Array.isArray(allowedCheck.rows[0].allowed_leader_ids)
+        ? allowedCheck.rows[0].allowed_leader_ids.map(Number)
+        : [];
+
+      if (registeredTeam) {
+        const teamId = Number(registeredTeam.id);
+        if (!is_leader) {
+          is_submission_applicable = false;
+          not_applicable_reason = `Only the Team Leader (ID #${leader_user_id}) is authorized to submit project deliverables for "${registeredTeam.team_name}".`;
+        } else if (allowed_leader_ids.length > 0 && !allowed_leader_ids.includes(leader_user_id) && !allowed_leader_ids.includes(teamId)) {
+          is_submission_applicable = false;
+          not_applicable_reason = `Your Team Leader ID #${leader_user_id} (Team #${teamId}) is not on the admin-approved shortlist for HackNova project submissions.`;
+        }
+      }
+    }
+
     return res.status(200).json({
       message: submission ? "Submission fetched" : "Nothing Submitted",
       submission,
@@ -223,12 +331,90 @@ const getHackNova = async (req, res) => {
       event_name: activeCheck.eventName,
       is_team_registered: Boolean(registeredTeamName),
       registered_team_name: registeredTeamName,
+      is_submission_applicable,
+      not_applicable_reason,
+      is_leader,
+      leader_user_id,
+      is_restricted,
+      registered_team: registeredTeam ? {
+        id: registeredTeam.id,
+        team_name: registeredTeam.team_name,
+        leader_user_id: registeredTeam.leader_user_id,
+      } : null,
     });
   } catch (error) {
     console.error("Error in getHackNova:", error);
     return res.status(500).json({
       error: "Internal Server error",
     });
+  }
+};
+
+/**
+ * Public/User/Admin: Fetch currently allowed Team Leader IDs and restriction flag
+ * GET /hacknova/allowed-leaders
+ */
+const getAllowedHackNovaLeaders = async (req, res) => {
+  try {
+    const result = await client.query(
+      "SELECT allowed_leader_ids, is_restricted, updated_at FROM hacknova_allowed_submissions ORDER BY id DESC LIMIT 1"
+    );
+    if (result.rowCount === 0) {
+      return res.status(200).json({
+        success: true,
+        allowed_leader_ids: [],
+        is_restricted: true,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      allowed_leader_ids: result.rows[0].allowed_leader_ids || [],
+      is_restricted: result.rows[0].is_restricted !== false,
+      updated_at: result.rows[0].updated_at,
+    });
+  } catch (error) {
+    console.error("Error in getAllowedHackNovaLeaders:", error);
+    return res.status(500).json({ error: "Failed to fetch allowed leader IDs." });
+  }
+};
+
+/**
+ * Admin only: Set/update allowed Team Leader IDs and restriction flag
+ * POST /hacknova/allowed-leaders
+ */
+const postAllowedHackNovaLeaders = async (req, res) => {
+  try {
+    const { allowed_leader_ids, is_restricted } = req.body;
+    const ids = Array.isArray(allowed_leader_ids)
+      ? allowed_leader_ids.map(Number).filter((n) => !isNaN(n))
+      : [];
+    const restricted = is_restricted !== false;
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS hacknova_allowed_submissions (
+        id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        allowed_leader_ids INT[] NOT NULL DEFAULT '{}',
+        is_restricted BOOLEAN NOT NULL DEFAULT true,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    const insertResult = await client.query(
+      `INSERT INTO hacknova_allowed_submissions (allowed_leader_ids, is_restricted, updated_at)
+       VALUES ($1, $2, NOW())
+       RETURNING *;`,
+      [ids, restricted]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Allowed Team Leader IDs saved successfully.",
+      allowed_leader_ids: insertResult.rows[0].allowed_leader_ids,
+      is_restricted: insertResult.rows[0].is_restricted,
+    });
+  } catch (error) {
+    console.error("Error in postAllowedHackNovaLeaders:", error);
+    return res.status(500).json({ error: "Failed to save allowed leader IDs." });
   }
 };
 
@@ -291,5 +477,6 @@ module.exports = {
   getHackNova,
   ResultHackNova,
   exportHackNovaCsv,
+  getAllowedHackNovaLeaders,
+  postAllowedHackNovaLeaders,
 };
-
