@@ -10,7 +10,9 @@
     "stop": "docker-compose -f docker-compose.dev.yml down",
     "restart": "npm run stop && npm run dev",
     "logs": "docker-compose -f docker-compose.dev.yml logs -f",
-    "clean": "docker-compose -f docker-compose.dev.yml down -v --remove-orphans"
+    "clean": "docker-compose -f docker-compose.dev.yml down -v --remove-orphans",
+    "tunnel": "ssh -i /home/rohitrpokalwar/Downloads/submissionskey.pem -N -L 5433:127.0.0.1:5432 ubuntu@13.200.56.216",
+    "tunnel:bg": "ssh -i /home/rohitrpokalwar/Downloads/submissionskey.pem -f -N -L 5433:127.0.0.1:5432 ubuntu@13.200.56.216"
   },
   "keywords": ["docker", "nodejs", "express", "postgres"],
   "author": "",

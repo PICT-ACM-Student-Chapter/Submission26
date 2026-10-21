@@ -22,6 +22,7 @@ const AdminRouter = require("./Routes/AdminRoutes");
 const UserRouter = require("./Routes/UserRoutes");
 const SubmissionEventRouter = require("./Routes/SubmissionEventRouter");
 const alleventRouter = require("./Routes/AlleventRoutes");
+const ResultsRouter = require("./Routes/ResultsRoutes");  // Public Results
 
 // 4 Active Events
 const FreezeRouter = require("./Routes/FreezeRoutes");       // EMS ID 10
@@ -167,6 +168,8 @@ app.use("/user", UserRouter);
 app.use("/admin", AdminRouter);
 app.use("/submission", SubmissionEventRouter);
 app.use("/allevents", alleventRouter);
+app.use("/results", ResultsRouter);
+app.use("/api/results", ResultsRouter);
 
 // 4 Target Events (Supports both /event and /api/event prefixes)
 app.use("/freeze", FreezeRouter);
