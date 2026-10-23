@@ -116,47 +116,36 @@ const postHackNova = async (req, res) => {
       notes,
     } = req.body;
 
-    // Detect uploaded files (PPTX/PDF presentation, and Project ZIP archive)
+    // Detect uploaded presentation file (PPTX/PDF)
     let presentation_url = req.body.presentation_url || req.body.pptx_or_pdf_url || req.body.deck_url || null;
-    let project_zip_url = req.body.project_zip_url || req.body.submission_file_url || null;
 
     if (Array.isArray(req.files)) {
       for (const f of req.files) {
         const ext = (f.originalname ? f.originalname.split(".").pop() : "").toLowerCase();
         const isDeck = ext === "pdf" || ext === "pptx" || ext === "ppt" || f.fieldname === "presentation_file" || f.fieldname === "deck_file";
-        const isZip = ext === "zip" || ext === "rar" || ext === "7z" || ext === "tar" || ext === "gz" || f.fieldname === "project_file" || f.fieldname === "project_zip";
-        
         if (isDeck && !presentation_url) {
           presentation_url = f.location;
-        } else if (isZip && !project_zip_url) {
-          project_zip_url = f.location;
-        } else if (!presentation_url && (ext === "pdf" || ext === "pptx" || ext === "ppt")) {
-          presentation_url = f.location;
-        } else if (!project_zip_url) {
-          project_zip_url = f.location;
         }
       }
     } else if (req.file) {
       const ext = (req.file.originalname ? req.file.originalname.split(".").pop() : "").toLowerCase();
       if (ext === "pdf" || ext === "pptx" || ext === "ppt" || req.file.fieldname === "presentation_file" || req.file.fieldname === "deck_file") {
         presentation_url = req.file.location;
-      } else {
-        project_zip_url = req.file.location;
       }
     }
 
-    const submission_file_url = project_zip_url || presentation_url || null;
+    const submission_file_url = presentation_url || null;
 
-    if (!github_url && !presentation_url && !project_zip_url && !submission_file_url) {
+    if (!github_url && !presentation_url && !submission_file_url) {
       return res.status(400).json({
-        error: "Please provide your GitHub repository link, presentation deck (PPTX/PDF), or project ZIP archive.",
+        error: "Please provide your GitHub repository link or presentation deck (PPTX/PDF).",
       });
     }
 
     const insertQuery = `
       INSERT INTO hacknova (
-        team_name, project_title, submission_file_url, github_url, live_demo_url, presentation_url, project_zip_url, notes, active_submission, fk_user, ems_user_id, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+        team_name, project_title, submission_file_url, github_url, live_demo_url, presentation_url, notes, active_submission, fk_user, ems_user_id, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
       RETURNING *;
     `;
     const response = await client.query(insertQuery, [
@@ -166,7 +155,6 @@ const postHackNova = async (req, res) => {
       github_url || "",
       live_demo_url || "",
       presentation_url,
-      project_zip_url,
       notes || "",
       true,
       req.user.id,
@@ -437,7 +425,7 @@ const ResultHackNova = async (req, res) => {
         h.github_url,
         h.live_demo_url,
         h.presentation_url,
-        h.project_zip_url,
+
         h.submission_file_url,
         h.notes,
         h.created_at

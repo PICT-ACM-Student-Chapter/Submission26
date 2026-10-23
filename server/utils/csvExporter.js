@@ -47,7 +47,7 @@ const EVENT_SPECS = {
         h.project_title,
         h.github_url,
         COALESCE(h.presentation_url, '') AS presentation_url,
-        COALESCE(h.project_zip_url, h.submission_file_url, '') AS project_zip_url,
+
         h.live_demo_url,
         h.notes,
         h.active_submission,
@@ -69,7 +69,7 @@ const EVENT_SPECS = {
       { label: "Project Title", value: "project_title" },
       { label: "GitHub Repo Link", value: "github_url" },
       { label: "Presentation Deck (PPTX/PDF)", value: "presentation_url" },
-      { label: "Project ZIP Archive", value: "project_zip_url" },
+
       { label: "Live Demo URL", value: "live_demo_url" },
       { label: "Notes / Description", value: "notes" },
       { label: "Active Submission", value: "active_submission" },
@@ -87,7 +87,7 @@ const EVENT_SPECS = {
       project_title: row.project_title || "N/A",
       github_url: row.github_url || "N/A",
       presentation_url: row.presentation_url || "N/A",
-      project_zip_url: row.project_zip_url || "N/A",
+
       live_demo_url: row.live_demo_url || "N/A",
       notes: row.notes || "",
       active_submission: row.active_submission ? "Yes" : "No",
@@ -602,7 +602,7 @@ async function generateMasterAllEventsCsv() {
       let details = "";
 
       if (key === "hacknova") {
-        primaryUrl = r.presentation_url || r.project_zip_url || "N/A";
+        primaryUrl = r.presentation_url || "N/A";
         secondaryUrl = r.github_url || r.live_demo_url || "N/A";
         titleOrTeam = `${r.team_name ? r.team_name + " - " : ""}${r.project_title || "N/A"}`;
         details = r.notes || "";
